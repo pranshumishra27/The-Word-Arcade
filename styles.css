@@ -428,3 +428,125 @@ input[type="text"]:focus {
 .start-letter { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); border-right: none; border-radius: 12px 0 0 12px; padding: 0 20px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.5rem; color: var(--accent-red-light); text-transform: uppercase; }
 .grouped-input input { border-radius: 0 12px 12px 0; border: 1px solid rgba(255,255,255,0.1); }
 .grouped-input input:focus { border-color: rgba(255,255,255,0.3); }
+
+/* --- RESPONSIVE DESIGN SYSTEM --- */
+
+/* Tablet (768px - 1024px) */
+@media screen and (max-width: 1024px) {
+    #app { padding: 15px; }
+    .header h1 { font-size: 2.8rem; }
+    .game-card { min-width: 280px; }
+    .battle-arena { gap: 15px; }
+}
+
+/* Mobile (max 768px) — Main Layout */
+@media screen and (max-width: 768px) {
+    body { align-items: flex-start; }
+
+    #app { padding: 12px; }
+
+    .header { margin-bottom: 10px; }
+    .header h1 { font-size: 2rem; }
+    .header p { font-size: 0.9rem; }
+
+    /* Catalogue stacks vertically */
+    #catalogue > div:last-child {
+        flex-direction: column !important;
+        gap: 15px !important;
+    }
+    .game-card { min-width: unset !important; padding: 20px; }
+    .game-card .icon { font-size: 2.5rem; margin-bottom: 10px; }
+    .game-card h2 { font-size: 1.4rem; }
+    .game-card p { font-size: 0.9rem; }
+
+    /* Profile strip  */
+    .player-profile div {
+        flex-direction: column !important;
+        gap: 6px !important;
+    }
+
+    /* Game Panels */
+    .glass-panel { padding: 15px; border-radius: 16px; }
+    .back-btn { margin-bottom: 15px; font-size: 0.85rem; padding: 8px 14px; }
+
+    /* Compound Chain */
+    .title-cc, .title-sr { font-size: 1.5rem; }
+
+    .cc-container > div:first-child {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+
+    /* Shrink the action buttons in the header */
+    .cc-container .btn, .sr-container .btn { 
+        font-size: 0.7rem !important; 
+        padding: 4px 8px !important; 
+        width: auto !important;
+    }
+    
+    .chain-tile { font-size: 0.85rem; padding: 8px 12px; border-radius: 8px; }
+    .circuit-path { width: 12px; height: 3px; }
+
+    .hint-text { font-size: 1.1rem; }
+    .hint-card { padding: 12px; }
+
+    /* Input forms full width */
+    .cc-input-area { gap: 10px; }
+    .input-form { 
+        max-width: 100%; 
+        flex-direction: row;
+        gap: 8px;
+    }
+    .input-form .btn { width: auto !important; padding: 12px 18px !important; }
+    input[type="text"] { 
+        padding: 12px 14px; 
+        font-size: 1rem; /* 1rem = prevents iOS Safari auto-zoom on focus */
+    }
+
+    /* Shiritori Battle Arena stacks vertically */
+    .battle-arena { 
+        flex-direction: row !important; 
+        gap: 10px; 
+        align-items: stretch;
+    }
+    .player-card { padding: 12px 10px; flex: 1; }
+    .player-card h3 { font-size: 0.9rem; margin-bottom: 8px; }
+    .vs-text { font-size: 1.2rem; align-self: center; }
+    .avatar-img { width: 40px; height: 40px; }
+
+    .health-bar-bg { height: 16px; border-radius: 8px; }
+
+    /* Combat log */
+    .word-history { height: 170px; padding: 10px; gap: 8px; }
+    .history-item { font-size: 0.85rem; padding: 8px 14px; max-width: 80%; }
+
+    /* Shiritori input */
+    #sr-form { flex-wrap: nowrap !important; gap: 8px !important; }
+    #sr-form .btn { width: auto !important; padding: 12px 18px !important; white-space: nowrap; }
+    .start-letter { padding: 0 14px; font-size: 1.2rem; }
+
+    /* SR Header */
+    .sr-container > div:first-child {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    .sr-container > div:first-child div { flex-wrap: wrap; }
+
+    /* Footer */
+    #credits-footer { padding-top: 25px !important; padding-bottom: 20px !important; }
+    #credits-footer p { font-size: 0.75rem !important; }
+
+    /* Rank badges */
+    .rank-badge { font-size: 0.75rem; padding: 4px 10px; }
+}
+
+/* Ultra-small phones (below 380px) */
+@media screen and (max-width: 380px) {
+    .header h1 { font-size: 1.6rem; }
+    .chain-tile { font-size: 0.75rem; padding: 7px 10px; }
+    .circuit-path { width: 8px; }
+    .history-item { font-size: 0.8rem; }
+    .battle-arena { flex-direction: column !important; }
+    .vs-text { margin: 0; }
+}
+
