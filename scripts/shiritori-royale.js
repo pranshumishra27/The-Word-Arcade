@@ -153,41 +153,62 @@ const shiritoriGame = {
         clearInterval(this.timer);
         this.timer = setInterval(() => {
             if (!this.isPlaying) return;
-            
-            this.timeLeft -= 1.0 + (this.currentTier * 0.2); 
-            
-            // Calculate Combo
+
+            this.timeLeft -= 1.0 + (this.currentTier * 0.2);
+
+            // ── Combo multiplier based on elapsed time since last word ──
             const elapsed = (performance.now() - this.lastWordTime) / 1000;
+            const comboEl = document.getElementById('sr-combo-text');
+
             if (elapsed < 2) {
                 this.comboMult = 2.0;
-                document.getElementById('sr-combo-text').style.color = "#00ff87";
+                comboEl.style.color = "#00ff87";
+                comboEl.textContent  = "2.0x FEVER! 🔥";
                 document.body.classList.add('fever-mode');
             } else if (elapsed < 5) {
                 this.comboMult = 1.5;
-                document.getElementById('sr-combo-text').style.color = "#f2c94c";
+                comboEl.style.color = "#f2c94c";
+                comboEl.textContent  = "1.5x Combo ⚡";
                 document.body.classList.remove('fever-mode');
             } else {
                 this.comboMult = 1.0;
-                document.getElementById('sr-combo-text').style.color = "var(--text-secondary)";
+                comboEl.style.color = "var(--text-secondary)";
+                comboEl.textContent  = "1.0x — answer fast!";
                 document.body.classList.remove('fever-mode');
             }
-            document.getElementById('sr-combo-text').textContent = this.comboMult.toFixed(1) + "x Combo";
 
+            // ── Timer bar: color tracks urgency green → orange → red ──
+            const pct = this.timeLeft;
+            const timerFill   = document.getElementById('sr-timer');
+            const startLetter = document.getElementById('sr-start-letter');
+
+            timerFill.style.width = Math.max(0, pct) + '%';
+
+            if (pct > 60) {
+                timerFill.style.background = 'linear-gradient(90deg, var(--accent-green-light), var(--accent-green-dark))';
+                timerFill.classList.remove('urgent');
+                if (startLetter) startLetter.style.color = 'var(--accent-green-light)';
+            } else if (pct > 30) {
+                timerFill.style.background = 'linear-gradient(90deg, #f2c94c, #f2994a)';
+                timerFill.classList.remove('urgent');
+                if (startLetter) startLetter.style.color = '#f2c94c';
+            } else {
+                timerFill.style.background = 'linear-gradient(90deg, var(--accent-red-light), var(--accent-red-dark))';
+                timerFill.classList.add('urgent');
+                if (startLetter) startLetter.style.color = 'var(--accent-red-light)';
+            }
+
+            // ── Time Out Penalty ──
             if (this.timeLeft <= 0) {
                 this.timeLeft = 0;
-                this.damage('player', 15 * AI_TIERS[this.currentTier].dmgMult);
-                this.setStatus('Time Out Penalty!', true);
+                const dmg = 15 * AI_TIERS[this.currentTier].dmgMult;
+                this.damage('player', dmg);
+                this.setStatus(`Too slow! −${Math.floor(dmg)} HP penalty ⚠️`, true);
                 fx.screenShake(10, 300);
                 if(typeof sfx !== 'undefined') sfx.playError();
                 this.timeLeft = 100;
                 this.lastWordTime = performance.now();
             }
-            
-            const timerFill = document.getElementById('sr-timer');
-            timerFill.style.width = this.timeLeft + '%';
-            
-            if (this.timeLeft < 30) timerFill.classList.add('urgent');
-            else timerFill.classList.remove('urgent');
 
             if (this.playerHp <= 0 || this.enemyHp <= 0) {
                 this.endGame();

@@ -7,6 +7,7 @@ const compoundChainGame = {
     timeLeft: 30,
     isPlaying: false,
     score: 0,
+    hintsUsedForWord: 0,  // tracks how many hints revealed for the current word
 
     init: function() {
         this.score = 0;
@@ -73,38 +74,80 @@ const compoundChainGame = {
 
     startTimer: function() {
         clearInterval(this.timer);
+        const timerFill = document.getElementById('cc-timer');
+        const timerText = document.getElementById('cc-timer-text');
+        const statusEl  = document.getElementById('cc-status');
+
         this.timer = setInterval(() => {
             if(!this.isPlaying) return;
             if(this.timeLeft > 0) {
                 this.timeLeft -= 1;
             }
-            
-            if(this.timeLeft <= 0) {
-                document.getElementById('cc-status').textContent = "Time bonus elapsed! Take your time.";
-                document.getElementById('cc-status').style.color = "var(--text-secondary)";
+
+            const pct = this.timeLeft / this.maxTime * 100;
+            timerFill.style.width = pct + '%';
+
+            if(this.timeLeft > 0) {
+                // Show countdown while bonus is still active
+                timerText.textContent = "⚡ " + this.timeLeft + "s bonus";
+                timerFill.style.background = pct > 50
+                    ? 'linear-gradient(90deg, var(--accent-green-light), var(--accent-green-dark))'
+                    : pct > 20
+                        ? 'linear-gradient(90deg, #f2c94c, #f2994a)'
+                        : 'linear-gradient(90deg, var(--accent-red-light), var(--accent-red-dark))';
+                statusEl.textContent = '';
+            } else {
+                timerText.textContent = "No bonus";
+                timerFill.style.width = '0%';
+                statusEl.textContent = "Bonus timer gone — answer anytime!";
+                statusEl.style.color = "var(--text-secondary)";
             }
-            
-            document.getElementById('cc-timer-text').textContent = "00:" + (this.timeLeft < 10 ? "0" : "") + this.timeLeft;
-            document.getElementById('cc-timer').style.width = (this.timeLeft / this.maxTime * 100) + '%';
         }, 1000);
     },
 
     buyHint: function() {
         if (this.currentWordIndex >= this.levelData.chain.length - 1) return;
-        
+
         const targetWord = this.levelData.chain[this.currentWordIndex + 1];
-        if (this.score >= 50) {
-            this.score -= 50;
-            document.getElementById('cc-score').textContent = this.score;
-            if(typeof sfx !== 'undefined') sfx.playClick();
-            document.getElementById('cc-hint').textContent += ` (Starts with "${targetWord[0].toUpperCase()}")`;
-            fx.createExplosion(window.innerWidth/2, window.innerHeight/2, '#f2c94c', 15);
-        } else {
+        const baseHint   = this.levelData.hints[this.currentWordIndex + 1];
+
+        if (this.score < 50) {
             if(typeof sfx !== 'undefined') sfx.playError();
-            document.getElementById('cc-status').textContent = "Not enough Points (need 50)!";
+            document.getElementById('cc-status').textContent = "Need 50 pts for a hint!";
             document.getElementById('cc-status').style.color = "var(--accent-red-light)";
             setTimeout(() => document.getElementById('cc-status').textContent = "", 2000);
+            return;
         }
+
+        this.score -= 50;
+        this.hintUsed = true;
+        this.hintsUsedForWord++; // track per-word hint count
+        document.getElementById('cc-score').textContent = this.score;
+        if(typeof sfx !== 'undefined') sfx.playClick();
+
+        const hintEl = document.getElementById('cc-hint');
+
+        // Build a progressively more revealing hint each time
+        if (this.hintsUsedForWord === 1) {
+            // First hint: show the clue + first letter
+            hintEl.textContent = `${baseHint} — starts with "${targetWord[0].toUpperCase()}"…`;
+        } else if (this.hintsUsedForWord === 2) {
+            // Second hint: show first 2 letters + length
+            const preview = targetWord.slice(0, 2).toUpperCase();
+            hintEl.textContent = `Starts with "${preview}" — ${targetWord.length} letters total`;
+        } else {
+            // Third+ hint: reveal half the word
+            const half = Math.ceil(targetWord.length / 2);
+            const preview = targetWord.slice(0, half).toUpperCase() + '…';
+            hintEl.textContent = `It starts: ${preview}  (${targetWord.length} letters)`;
+        }
+
+        // Explosion from the hint button, not screen center
+        const btnEl = document.getElementById('cc-buy-hint');
+        const rect = btnEl ? btnEl.getBoundingClientRect() : null;
+        const cx = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
+        const cy = rect ? rect.top : window.innerHeight / 2;
+        if(typeof fx !== 'undefined') fx.createExplosion(cx, cy, '#f2c94c', 15);
     },
 
     renderViewer: function() {
@@ -130,6 +173,8 @@ const compoundChainGame = {
         });
 
         if (this.currentWordIndex < this.levelData.chain.length - 1) {
+            // Reset hint counter for the new word being guessed
+            this.hintsUsedForWord = 0;
             document.getElementById('cc-hint').textContent = this.levelData.hints[this.currentWordIndex + 1];
             document.getElementById('cc-input').focus();
         } else {
