@@ -7,7 +7,7 @@ const compoundChainGame = {
     timeLeft: 30,
     isPlaying: false,
     score: 0,
-    hintsUsedForWord: 0,  // tracks how many hints revealed for the current word
+    hintsUsedForWord: 0,
 
     init: function() {
         this.score = 0;
@@ -22,7 +22,6 @@ const compoundChainGame = {
         this.loadLevel(0);
     },
 
-    // Daily challenge mode — loads a single seeded level
     initDaily: function() {
         this.score = 0;
         this.hintUsed = false;
@@ -45,17 +44,16 @@ const compoundChainGame = {
             document.getElementById('cc-status').textContent = "Run complete! Fantastic linkage!";
             document.getElementById('cc-status').style.color = "var(--accent-green-light)";
             document.getElementById('cc-hint').textContent = "Circuit Mastery Achieved!";
-            
-            setTimeout(() => {
-                this.init(); // Auto-restart a fresh run
-            }, 5000);
+            const postEl = document.getElementById('cc-post-game');
+            if (postEl) postEl.classList.remove('hidden');
+            setTimeout(() => { this.init(); }, 5000);
             return;
         }
 
         this.currentLevelId = index;
         this.currentWordIndex = 0;
         this.levelData = this.currentRun[index];
-        this.maxTime = Math.max(10, 30 - (index * 1)); 
+        this.maxTime = Math.max(10, 30 - (index * 1));
         this.timeLeft = this.maxTime;
         this.isPlaying = true;
 
@@ -66,7 +64,7 @@ const compoundChainGame = {
         if (timerLabel) timerLabel.textContent = '';
         const postEl = document.getElementById('cc-post-game');
         if (postEl) postEl.classList.add('hidden');
-        
+
         this.renderViewer();
         this.startTimer();
     },
@@ -80,7 +78,7 @@ const compoundChainGame = {
         clearInterval(this.timer);
         const timerFill  = document.getElementById('cc-timer');
         const timerText  = document.getElementById('cc-timer-text');
-        const timerLabel = document.getElementById('cc-status-timer'); // separate quiet line
+        const timerLabel = document.getElementById('cc-status-timer');
 
         this.timer = setInterval(() => {
             if(!this.isPlaying) return;
@@ -89,20 +87,19 @@ const compoundChainGame = {
             }
 
             const pct = this.timeLeft / this.maxTime * 100;
-            timerFill.style.width = pct + '%';
+            if(timerFill) timerFill.style.width = pct + '%';
 
             if(this.timeLeft > 0) {
-                timerText.textContent = "⚡ " + this.timeLeft + "s bonus";
-                timerFill.style.background = pct > 50
+                if(timerText) timerText.textContent = "⚡ " + this.timeLeft + "s bonus";
+                if(timerFill) timerFill.style.background = pct > 50
                     ? 'linear-gradient(90deg, var(--accent-green-light), var(--accent-green-dark))'
                     : pct > 20
                         ? 'linear-gradient(90deg, #f2c94c, #f2994a)'
                         : 'linear-gradient(90deg, var(--accent-red-light), var(--accent-red-dark))';
                 if (timerLabel) timerLabel.textContent = '';
             } else {
-                timerText.textContent = "No bonus";
-                timerFill.style.width = '0%';
-                // Write to the TIMER label, not the error label
+                if(timerText) timerText.textContent = "No bonus";
+                if(timerFill) timerFill.style.width = '0%';
                 if (timerLabel) {
                     timerLabel.textContent = "Bonus time gone — answer anytime!";
                     timerLabel.style.color = "var(--text-secondary)";
@@ -127,28 +124,23 @@ const compoundChainGame = {
 
         this.score -= 50;
         this.hintUsed = true;
-        this.hintsUsedForWord++; // track per-word hint count
+        this.hintsUsedForWord++;
         document.getElementById('cc-score').textContent = this.score;
         if(typeof sfx !== 'undefined') sfx.playClick();
 
         const hintEl = document.getElementById('cc-hint');
 
-        // Build a progressively more revealing hint each time
         if (this.hintsUsedForWord === 1) {
-            // First hint: show the clue + first letter
             hintEl.textContent = `${baseHint} — starts with "${targetWord[0].toUpperCase()}"…`;
         } else if (this.hintsUsedForWord === 2) {
-            // Second hint: show first 2 letters + length
             const preview = targetWord.slice(0, 2).toUpperCase();
             hintEl.textContent = `Starts with "${preview}" — ${targetWord.length} letters total`;
         } else {
-            // Third+ hint: reveal half the word
             const half = Math.ceil(targetWord.length / 2);
             const preview = targetWord.slice(0, half).toUpperCase() + '…';
             hintEl.textContent = `It starts: ${preview}  (${targetWord.length} letters)`;
         }
 
-        // Explosion from the hint button, not screen center
         const btnEl = document.getElementById('cc-buy-hint');
         const rect = btnEl ? btnEl.getBoundingClientRect() : null;
         const cx = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
@@ -159,7 +151,7 @@ const compoundChainGame = {
     renderViewer: function() {
         const viewer = document.getElementById('cc-chain-viewer');
         viewer.innerHTML = '';
-        
+
         this.levelData.chain.forEach((word, index) => {
             const el = document.createElement('div');
             if (index <= this.currentWordIndex) {
@@ -179,34 +171,96 @@ const compoundChainGame = {
         });
 
         if (this.currentWordIndex < this.levelData.chain.length - 1) {
-            // Reset hint counter for the new word being guessed
             this.hintsUsedForWord = 0;
             document.getElementById('cc-hint').textContent = this.levelData.hints[this.currentWordIndex + 1];
             document.getElementById('cc-input').focus();
         } else {
             this.isPlaying = false;
             clearInterval(this.timer);
-            // 50 points completion bonus
+
             const levelScore = 50;
             this.score += levelScore;
             document.getElementById('cc-score').textContent = this.score;
-            
-            // Save global profile high score
+
             if (this.score > app.player.ccHighScore) {
                 app.player.ccHighScore = this.score;
                 app.saveProfile();
             }
-            
+
+            // Daily challenge hook
+            if (this.isDailyMode && typeof daily !== 'undefined') {
+                daily.onLevelComplete(this.score);
+            }
+
+            // Perfect chain achievement
+            if (!this.hintUsed && typeof achievements !== 'undefined') {
+                achievements.unlock('perfect_chain');
+            }
+
             document.getElementById('cc-hint').textContent = "Circuit complete!";
             document.getElementById('cc-status').textContent = `+${levelScore} Circuit Completion!`;
             document.getElementById('cc-status').style.color = "var(--accent-green-light)";
-            fx.createExplosion(window.innerWidth / 2, window.innerHeight / 2, '#60efff', 40);
+            if(typeof fx !== 'undefined') {
+                fx.createExplosion(window.innerWidth / 2, window.innerHeight / 2, '#60efff', 40);
+                fx.screenPulse();
+            }
             if(typeof sfx !== 'undefined') sfx.playVictory();
-            fx.screenPulse();
-            
-            // Allow them to look at the completed circuit for a bit
+
+            setTimeout(() => { this.loadLevel(this.currentLevelId + 1); }, 3000);
+        }
+    },
+
+    submitGuess: function(e) {
+        e.preventDefault();
+        const inputEl = document.getElementById('cc-input');
+        const guess = inputEl.value.trim().toLowerCase();
+
+        if (this.currentWordIndex >= this.levelData.chain.length - 1) return;
+
+        const elRect = inputEl.getBoundingClientRect();
+        const targetWord = this.levelData.chain[this.currentWordIndex + 1].toLowerCase();
+
+        if (guess === targetWord) {
+            this.currentWordIndex++;
+            inputEl.value = '';
+            document.getElementById('cc-status').textContent = '';
+            if(typeof sfx !== 'undefined') sfx.playSuccess();
+
+            const bonus = Math.floor((this.timeLeft / this.maxTime) * 20) + 10;
+            this.score += bonus;
+            document.getElementById('cc-score').textContent = this.score;
+            if(typeof fx !== 'undefined') {
+                fx.floatingText(`+${bonus}`, elRect.left + elRect.width/2, elRect.top - 20, '#00ff87', '2rem');
+                fx.createExplosion(elRect.left + elRect.width/2, elRect.top, '#00ff87', 20);
+            }
+
+            this.timeLeft = this.maxTime;
+            this.renderViewer();
+        } else {
+            if(typeof sfx !== 'undefined') sfx.playError();
+            const form = document.getElementById('cc-form');
+            form.classList.add('shake');
+
+            const playfulErrors = [
+                "Bzzt! Short circuit! Try again.",
+                "That word doesn't quite link up...",
+                "Invalid fusion detected!",
+                "Nope, that fuse just blew!",
+                "The Arcade says... Nah.",
+                "Spelling glitch? Or just a wild guess?",
+                "Not the right spark!"
+            ];
+            const randomError = playfulErrors[Math.floor(Math.random() * playfulErrors.length)];
+
+            document.getElementById('cc-status').textContent = randomError;
+            document.getElementById('cc-status').style.color = "var(--accent-red-light)";
+            if(typeof fx !== 'undefined') fx.screenShake(5, 200);
+            setTimeout(() => form.classList.remove('shake'), 400);
+
             setTimeout(() => {
-                this.loadLevel(this.currentLevelId + 1);
+                if(document.getElementById('cc-status').textContent === randomError) {
+                    document.getElementById('cc-status').textContent = "";
+                }
             }, 3000);
         }
     },
@@ -236,60 +290,6 @@ Play free at https://the-word-arcade.vercel.app`;
             ta.focus(); ta.select();
             try { document.execCommand('copy'); onCopied(); } catch(e) {}
             ta.remove();
-        }
-    }
-};
-
-
-        e.preventDefault();
-        const inputEl = document.getElementById('cc-input');
-        const guess = inputEl.value.trim().toLowerCase();
-        
-        if (this.currentWordIndex >= this.levelData.chain.length - 1) return;
-
-        const elRect = inputEl.getBoundingClientRect();
-        const targetWord = this.levelData.chain[this.currentWordIndex + 1].toLowerCase();
-
-        if (guess === targetWord) {
-            this.currentWordIndex++;
-            inputEl.value = '';
-            document.getElementById('cc-status').textContent = '';
-            if(typeof sfx !== 'undefined') sfx.playSuccess();
-            
-            const bonus = Math.floor((this.timeLeft / this.maxTime) * 20) + 10;
-            this.score += bonus;
-            document.getElementById('cc-score').textContent = this.score;
-            fx.floatingText(`+${bonus}`, elRect.left + elRect.width/2, elRect.top - 20, '#00ff87', '2rem');
-            fx.createExplosion(elRect.left + elRect.width/2, elRect.top, '#00ff87', 20);
-            
-            this.timeLeft = this.maxTime;
-            this.renderViewer();
-        } else {
-            if(typeof sfx !== 'undefined') sfx.playError();
-            const form = document.getElementById('cc-form');
-            form.classList.add('shake');
-            
-            const playfulErrors = [
-                "Bzzt! Short circuit! Try again.",
-                "That word doesn't quite link up...",
-                "Invalid fusion detected!",
-                "Nope, that fuse just blew!",
-                "The Arcade says... Nah.",
-                "Spelling glitch? Or just a wild guess?",
-                "Not the right spark!"
-            ];
-            const randomError = playfulErrors[Math.floor(Math.random() * playfulErrors.length)];
-            
-            document.getElementById('cc-status').textContent = randomError;
-            document.getElementById('cc-status').style.color = "var(--accent-red-light)";
-            fx.screenShake(5, 200);
-            setTimeout(() => form.classList.remove('shake'), 400);
-            
-            setTimeout(() => {
-                if(document.getElementById('cc-status').textContent === randomError) {
-                    document.getElementById('cc-status').textContent = "";
-                }
-            }, 3000);
         }
     }
 };
