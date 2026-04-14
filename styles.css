@@ -378,23 +378,51 @@ input[type="text"]:focus {
 .vs-text { font-size: 2.5rem; font-weight: 800; color: rgba(255,255,255,0.1); font-family: 'Outfit'; }
 
 .word-history {
-    background: rgba(0,0,0,0.3);
-    border: 1px solid rgba(255,255,255,0.05);
-    border-radius: 12px;
-    height: 180px;
+    background: rgba(0,0,0,0.5);
+    height: 250px; 
     overflow-y: auto;
-    padding: 20px;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 20px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 12px;
+    border: 1px solid rgba(255,255,255,0.05);
+    box-shadow: inset 0 5px 15px rgba(0,0,0,0.5);
     scroll-behavior: smooth;
 }
-.word-history::-webkit-scrollbar { width: 8px; }
-.word-history::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
 
-.history-item { margin: 0; padding: 8px 15px; border-radius: 8px; width: fit-content; font-size: 1.1rem; font-weight: 500; animation: popIn 0.3s; }
-.history-item.player { background: rgba(58, 123, 213, 0.2); border: 1px solid rgba(58, 123, 213, 0.3); align-self: flex-start; }
-.history-item.enemy { background: rgba(255, 75, 75, 0.2); border: 1px solid rgba(255, 75, 75, 0.3); align-self: flex-end; }
+.history-item {
+    font-weight: 800;
+    padding: 12px 20px;
+    border-radius: 20px;
+    color: #fff;
+    max-width: 75%;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+    animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    word-wrap: break-word;
+}
+
+.history-item.player {
+    background: linear-gradient(135deg, #1fa2ff, #12d8fa);
+    align-self: flex-end; 
+    border-bottom-right-radius: 4px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.history-item.enemy {
+    background: linear-gradient(135deg, #ff416c, #ff4b2b);
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+@keyframes popIn {
+    0% { transform: scale(0.8) translateY(10px); opacity: 0; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
+}
 
 .grouped-input { display: flex; align-items: stretch; flex: 1; }
 .start-letter { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); border-right: none; border-radius: 12px 0 0 12px; padding: 0 20px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.5rem; color: var(--accent-red-light); text-transform: uppercase; }

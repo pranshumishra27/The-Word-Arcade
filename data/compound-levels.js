@@ -18,5 +18,15 @@ const COMPOUND_LEVELS = [
     { id: 17, chain: ["hand", "shake", "down", "town"], hints: ["End of the arm", "To move rapidly back and forth", "Opposite of up", "City center"] },
     { id: 18, chain: ["head", "light", "hearted", "ness"], hints: ["Top part of body", "Illumination", "Feeling kind or joyful", "State of being suffix"] },
     { id: 19, chain: ["heart", "beat", "down", "fall"], hints: ["Pumping organ", "Rhythmic pulse", "Opposite of up", "A drop or collapse"] },
-    { id: 20, chain: ["grand", "stand", "point", "less"], hints: ["Magnificent", "To be upright", "A sharp end", "Without purpose"] }
+    { id: 20, chain: ["grand", "stand", "point", "less"], hints: ["Magnificent", "To be upright", "A sharp end", "Without purpose"] },
+    { id: 21, chain: ["honey", "comb", "over", "time"], hints: ["Sweet bee nectar", "Hair grooming tool", "Above", "Measured duration"] },
+    { id: 22, chain: ["moon", "beam", "sword", "play"], hints: ["Night sky orb", "Ray of light", "Blade weapon", "To have fun"] },
+    { id: 23, chain: ["thunder", "storm", "cloud", "bank"], hints: ["Loud sky boom", "Bad weather", "White sky fluff", "Where money is kept"] },
+    { id: 24, chain: ["dragon", "fly", "trap", "door"], hints: ["Mythical fire lizard", "Insect that buzzes", "A snare", "Entrance to a room"] },
+    { id: 25, chain: ["ghost", "town", "hall", "way"], hints: ["Spooky spirit", "Small city", "Large gathering room", "Path or road"] },
+    { id: 26, chain: ["super", "star", "dust", "pan"], hints: ["Above average", "Night sky light", "Dirt particles", "Cooking or cleaning tool"] },
+    { id: 27, chain: ["black", "board", "game", "plan"], hints: ["Darkest color", "Flat wood piece", "Activity for fun", "A strategy"] },
+    { id: 28, chain: ["light", "house", "boat", "house"], hints: ["Illumination", "A dwelling", "Water vessel", "Another dwelling"] },
+    { id: 29, chain: ["pass", "word", "play", "ground"], hints: ["To go by", "Lexical unit", "To have fun", "The earth"] },
+    { id: 30, chain: ["blue", "print", "out", "cast"], hints: ["Color of sky", "To put ink to paper", "Not in", "A group of actors"] }
 ];

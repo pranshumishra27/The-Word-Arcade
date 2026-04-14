@@ -1,6 +1,7 @@
 const compoundChainGame = {
     currentLevelId: 0,
     currentWordIndex: 0,
+    currentRun: [],
     levelData: null,
     timer: null,
     timeLeft: 30,
@@ -13,25 +14,33 @@ const compoundChainGame = {
         if(typeof app !== 'undefined' && app.player.name) {
             document.getElementById('cc-player-name-display').textContent = `Player: ${app.player.name}`;
         }
+        
+        let pool = [...COMPOUND_LEVELS].sort(() => 0.5 - Math.random());
+        this.currentRun = pool.slice(0, 10);
+        
         this.loadLevel(0);
     },
 
     loadLevel: function(index) {
-        if(index >= COMPOUND_LEVELS.length) {
-            document.getElementById('cc-status').textContent = "You've completed all levels!";
+        if(index >= this.currentRun.length) {
+            document.getElementById('cc-status').textContent = "Run complete! Fantastic linkage!";
             document.getElementById('cc-status').style.color = "var(--accent-green-light)";
-            document.getElementById('cc-hint').textContent = "Incredible job!";
+            document.getElementById('cc-hint').textContent = "Circuit Mastery Achieved!";
+            
+            setTimeout(() => {
+                this.init(); // Auto-restart a fresh run
+            }, 5000);
             return;
         }
 
         this.currentLevelId = index;
         this.currentWordIndex = 0;
-        this.levelData = COMPOUND_LEVELS[index];
+        this.levelData = this.currentRun[index];
         this.maxTime = Math.max(10, 30 - (index * 1)); 
         this.timeLeft = this.maxTime;
         this.isPlaying = true;
 
-        document.getElementById('cc-level-id').textContent = this.levelData.id;
+        document.getElementById('cc-level-id').textContent = (index + 1) + " / " + this.currentRun.length;
         document.getElementById('cc-input').value = '';
         document.getElementById('cc-status').textContent = '';
         

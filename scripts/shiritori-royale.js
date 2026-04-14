@@ -39,7 +39,9 @@ const shiritoriGame = {
         }
 
         if (this.dictionary.size === 0 && typeof DICTIONARY !== 'undefined') {
-            this.dictionary = new Set(DICTIONARY);
+            // Strict Anti-Cheat: Strip words less than 3 letters and anything non-alphabetic
+            const sanitizedWords = DICTIONARY.filter(w => w.length > 2 && /^[a-zA-Z]+$/.test(w));
+            this.dictionary = new Set(sanitizedWords);
         }
 
         document.getElementById('sr-history').innerHTML = '';
