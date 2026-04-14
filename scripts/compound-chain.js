@@ -65,6 +65,10 @@ const compoundChainGame = {
         const postEl = document.getElementById('cc-post-game');
         if (postEl) postEl.classList.add('hidden');
 
+        // Daily mode: hide hint button entirely
+        const hintBtn = document.getElementById('cc-buy-hint');
+        if (hintBtn) hintBtn.style.display = this.isDailyMode ? 'none' : '';
+
         this.renderViewer();
         this.startTimer();
     },
@@ -212,12 +216,15 @@ const compoundChainGame = {
 
     submitGuess: function(e) {
         e.preventDefault();
+        if(typeof sfx !== 'undefined') sfx.init(); // ensure audio context is running
         const inputEl = document.getElementById('cc-input');
         const guess = inputEl.value.trim().toLowerCase();
 
         if (this.currentWordIndex >= this.levelData.chain.length - 1) return;
 
         const elRect = inputEl.getBoundingClientRect();
+        const cx = elRect.left + elRect.width / 2;
+        const cy = elRect.top;
         const targetWord = this.levelData.chain[this.currentWordIndex + 1].toLowerCase();
 
         if (guess === targetWord) {
@@ -230,8 +237,8 @@ const compoundChainGame = {
             this.score += bonus;
             document.getElementById('cc-score').textContent = this.score;
             if(typeof fx !== 'undefined') {
-                fx.floatingText(`+${bonus}`, elRect.left + elRect.width/2, elRect.top - 20, '#00ff87', '2rem');
-                fx.createExplosion(elRect.left + elRect.width/2, elRect.top, '#00ff87', 20);
+                fx.floatingText(`+${bonus}`, cx, cy - 20, '#00ff87', '2rem');
+                fx.createExplosion(cx, cy, '#00ff87', 20);
             }
 
             this.timeLeft = this.maxTime;

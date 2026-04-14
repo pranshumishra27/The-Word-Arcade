@@ -256,9 +256,17 @@ const shiritoriGame = {
     },
 
     updateHealth: function() {
+        const pHP = Math.max(0, Math.round(this.playerHp));
+        const eHP = Math.max(0, Math.round(this.enemyHp));
+        const eMax = AI_TIERS[this.currentTier].hp;
+
         document.getElementById('sr-player-hp').style.width = (this.playerHp / this.maxPlayerHp * 100) + '%';
-        let enemyMax = AI_TIERS[this.currentTier].hp;
-        document.getElementById('sr-enemy-hp').style.width = (this.enemyHp / enemyMax * 100) + '%';
+        document.getElementById('sr-enemy-hp').style.width  = (this.enemyHp / eMax * 100) + '%';
+
+        const ptxt = document.getElementById('sr-player-hp-text');
+        const etxt = document.getElementById('sr-enemy-hp-text');
+        if (ptxt) ptxt.textContent = pHP + ' HP';
+        if (etxt) etxt.textContent = eHP + ' HP';
     },
 
     setStatus: function(msg, isError = false) {

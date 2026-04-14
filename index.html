@@ -54,10 +54,11 @@
 
     <div id="app">
         <!-- Header -->
-        <div class="header" style="margin-bottom: 20px;">
-            <h1>The Word Arcade</h1>
-            <p>Select your lexical challenge.</p>
-        </div>
+        <header class="header" style="margin-bottom:30px; text-align:center; padding-top:10px;">
+            <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:3px; color:var(--text-secondary); margin-bottom:8px;">Word Gaming Platform</div>
+            <h1 style="margin:0; font-size: clamp(2rem, 5vw, 3.2rem); font-family:'Outfit',sans-serif; background:linear-gradient(135deg,#fff 0%,var(--accent-blue) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">The Word Arcade</h1>
+            <p style="margin:8px 0 0 0; color:var(--text-secondary); font-size:0.95rem;">Two elite word games. Zero mercy.</p>
+        </header>
 
         <!-- Onboarding Screen -->
         <div id="onboarding" class="glass-panel animate-slide-up" style="max-width: 400px; margin: 20px auto; text-align: center;">
@@ -111,21 +112,22 @@
                 </div>
             </div>
             
-        <!-- Game Cards -->
-        <div style="display: flex; gap: 30px; justify-content: center; flex-wrap: wrap;">
-            <div class="game-card glass-panel card-cc" onclick="app.launchGame('cc')">
-                <div class="icon">🧩</div>
-                <h2>Compound Chain</h2>
-                <p>Link compound words logically from start to finish. Race the bonus timer for maximum points.</p>
-                <div class="card-tag">🧠 Puzzle · Solo · Daily</div>
+            <!-- Game Cards -->
+            <div style="margin-bottom:6px; font-size:0.75rem; text-transform:uppercase; letter-spacing:2px; color:var(--text-secondary);">Choose Your Game</div>
+            <div style="display:flex; gap:20px; justify-content:center; flex-wrap:wrap;">
+                <div class="game-card glass-panel card-cc" onclick="app.launchGame('cc')">
+                    <div class="icon">🧩</div>
+                    <h2>Compound Chain</h2>
+                    <p>Link compound words logically from start to finish. Race the bonus timer for maximum points.</p>
+                    <div class="card-tag">🧠 Puzzle · Solo · Daily</div>
+                </div>
+                <div class="game-card glass-panel card-sr" onclick="app.launchGame('sr')">
+                    <div class="icon">⚔️</div>
+                    <h2>Shiritori Royale</h2>
+                    <p>Battle AI Overlords by chaining words on the last letter. Faster combos deal more damage.</p>
+                    <div class="card-tag">🔥 Combat · Tiers · Session</div>
+                </div>
             </div>
-            <div class="game-card glass-panel card-sr" onclick="app.launchGame('sr')">
-                <div class="icon">⚔️</div>
-                <h2>Shiritori Royale</h2>
-                <p>Battle AI Overlords by chaining words on the last letter. Faster combos deal more damage.</p>
-                <div class="card-tag">🔥 Combat · Tiers · Session</div>
-            </div>
-        </div>
         </div>
 
         <!-- ── COMPOUND CHAIN INTERFACE ──────────────────────── -->
@@ -203,13 +205,19 @@
                     <div class="player-card" id="sr-player">
                         <div class="player-avatar-icon">🦸</div>
                         <h3 id="sr-player-name-display">Player</h3>
-                        <div class="health-bar-bg"><div class="health-bar-fill" id="sr-player-hp" style="width: 100%"></div></div>
+                        <div class="health-bar-bg" style="width:100%;">
+                            <div class="health-bar-fill" id="sr-player-hp" style="width:100%"></div>
+                            <div class="health-text" id="sr-player-hp-text">100 HP</div>
+                        </div>
                     </div>
                     <div class="vs-text">VS</div>
                     <div class="player-card" id="sr-enemy">
                         <img id="sr-enemy-avatar" class="avatar-img" src="assets/ai_bronze_1776192974545.png" alt="AI Avatar">
-                        <h3 id="sr-enemy-name" style="margin-top:0;">Bronze Grunt</h3>
-                        <div class="health-bar-bg"><div class="health-bar-fill" id="sr-enemy-hp" style="width: 100%"></div></div>
+                        <h3 id="sr-enemy-name">Bronze Grunt</h3>
+                        <div class="health-bar-bg" style="width:100%;">
+                            <div class="health-bar-fill" id="sr-enemy-hp" style="width:100%"></div>
+                            <div class="health-text" id="sr-enemy-hp-text">100 HP</div>
+                        </div>
                     </div>
                 </div>
 
