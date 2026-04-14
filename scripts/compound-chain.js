@@ -161,10 +161,29 @@ const compoundChainGame = {
             if(typeof sfx !== 'undefined') sfx.playError();
             const form = document.getElementById('cc-form');
             form.classList.add('shake');
-            document.getElementById('cc-status').textContent = "Incorrect connection. Try again!";
+            
+            const playfulErrors = [
+                "Bzzt! Short circuit! Try again.",
+                "That word doesn't quite link up...",
+                "Invalid fusion detected!",
+                "Nope, that fuse just blew!",
+                "The Arcade says... Nah.",
+                "Spelling glitch? Or just a wild guess?",
+                "Not the right spark!"
+            ];
+            const randomError = playfulErrors[Math.floor(Math.random() * playfulErrors.length)];
+            
+            document.getElementById('cc-status').textContent = randomError;
             document.getElementById('cc-status').style.color = "var(--accent-red-light)";
             fx.screenShake(5, 200);
             setTimeout(() => form.classList.remove('shake'), 400);
+            
+            // Clear the text after a few seconds so it doesn't stay there forever
+            setTimeout(() => {
+                if(document.getElementById('cc-status').textContent === randomError) {
+                    document.getElementById('cc-status').textContent = "";
+                }
+            }, 3000);
         }
     }
 };
