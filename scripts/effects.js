@@ -128,6 +128,40 @@ const fx = {
             }
         };
         requestAnimationFrame(anim);
+    },
+
+    toast: function(message, type = 'error') {
+        const el = document.createElement('div');
+        el.textContent = message;
+        el.style.position = 'fixed';
+        el.style.top = '20px';
+        el.style.left = '50%';
+        el.style.transform = 'translateX(-50%) translateY(-50px)';
+        el.style.background = type === 'error' ? 'rgba(255,0,0,0.8)' : 'rgba(0,255,135,0.8)';
+        el.style.color = '#fff';
+        el.style.padding = '15px 30px';
+        el.style.borderRadius = '20px';
+        el.style.fontFamily = "'Inter', sans-serif";
+        el.style.fontWeight = 'bold';
+        el.style.zIndex = '10000';
+        el.style.boxShadow = '0 10px 30px rgba(0,0,0,0.5)';
+        el.style.transition = 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+        el.style.backdropFilter = 'blur(10px)';
+        el.style.border = '1px solid rgba(255,255,255,0.2)';
+        
+        document.body.appendChild(el);
+        
+        // Slide in
+        setTimeout(() => {
+            el.style.transform = 'translateX(-50%) translateY(0)';
+        }, 10);
+        
+        // Slide out
+        setTimeout(() => {
+            el.style.transform = 'translateX(-50%) translateY(-50px)';
+            el.style.opacity = '0';
+            setTimeout(() => document.body.removeChild(el), 400);
+        }, 4000);
     }
 };
 

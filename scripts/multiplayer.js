@@ -20,7 +20,7 @@ const multiplayer = {
 
     joinLobby: function(gameId) {
         if(!this.client) {
-            alert("Live Multiplayer is currently disconnected. Configure Supabase keys to host a match.");
+            if(typeof fx !== 'undefined') fx.toast("Live Multiplayer disconnected. Awaiting Supabase key config.", "error");
             return;
         }
 
@@ -51,7 +51,7 @@ const multiplayer = {
                     online_at: new Date().toISOString()
                 });
                 console.log('Joined Lobby:', roomName);
-                alert("Connected to Lobby: " + roomName);
+                if(typeof fx !== 'undefined') fx.toast("Connected to Lobby: " + roomName, "success");
             }
         });
     },

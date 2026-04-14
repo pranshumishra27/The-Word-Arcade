@@ -78,7 +78,21 @@ const app = {
                 }
             }
         });
+    },
+
+    antiTamper: function() {
+        setInterval(() => {
+            const footer = document.getElementById('credits-footer');
+            if(!footer || !footer.innerHTML.includes('pranshumishra27')) {
+                console.warn('Security: Footer modification detected. Re-initializing components.');
+                if(typeof fx !== 'undefined') fx.toast('System Integrity Compromised. Restoring...', 'error');
+                setTimeout(() => window.location.reload(), 2000);
+            }
+        }, 5000);
     }
 };
 
-window.addEventListener('load', () => app.init());
+window.addEventListener('load', () => {
+    app.init();
+    app.antiTamper();
+});
