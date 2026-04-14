@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Word Arcade</title>
+    <!-- Use basic Google Fonts for premium typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Removed global coins bar -->
+    
+    <div id="app">
+        <!-- Header -->
+        <div class="header" style="margin-bottom: 20px;">
+            <h1>The Word Arcade</h1>
+            <p>Select your lexical challenge.</p>
+        </div>
+
+        <!-- Onboarding Screen -->
+        <div id="onboarding" class="glass-panel animate-slide-up" style="max-width: 400px; margin: 40px auto; text-align: center;">
+            <h2>Welcome to the Arcade</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">Identify yourself, Challenger.</p>
+            <form onsubmit="app.registerPlayer(event)">
+                <input type="text" id="player-name-input" placeholder="Enter Player/Team Name" autocomplete="off" required style="width: 100%; box-sizing: border-box; margin-bottom: 20px; text-align: center;">
+                <button type="submit" class="btn btn-cc" style="width: 100%;">Insert Coin</button>
+            </form>
+        </div>
+
+        <!-- Catalogue / Home Screen -->
+        <div id="catalogue" class="animate-slide-up hidden">
+            <!-- Player Stats Profile -->
+            <div class="player-profile" style="background: rgba(0,0,0,0.4); padding: 15px 20px; border-radius: 12px; margin-bottom: 30px; text-align: center; border: 1px solid rgba(255,255,255,0.1);">
+                <h3 style="margin: 0 0 10px 0; color: var(--accent-blue);">Agent: <span id="profile-name"></span></h3>
+                <div style="display:flex; justify-content: center; gap: 20px; font-size: 0.9rem; color: var(--text-secondary);">
+                    <span>Compound Score: <strong id="profile-cc-score" style="color:#fff;">0</strong></span>
+                    <span>Shiritori Score: <strong id="profile-sr-score" style="color:#fff;">0</strong></span>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 30px; justify-content: center; flex-wrap: wrap;">
+                <div class="game-card glass-panel card-cc" onclick="app.launchGame('cc')">
+                    <div class="icon">🧩</div>
+                    <h2>Compound Chain</h2>
+                    <p>Connect compound words logically from start to finish.</p>
+                </div>
+                <div class="game-card glass-panel card-sr" onclick="app.launchGame('sr')">
+                    <div class="icon">⚔️</div>
+                    <h2>Shiritori Royale</h2>
+                    <p>Battle AI Overlords through ranks.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compound Chain Interface -->
+        <div id="game-cc" class="glass-panel hidden animate-slide-up">
+            <button class="back-btn" onclick="app.showCatalogue()">← Return to Nexus</button>
+            <div class="cc-container">
+                <div style="display:flex; justify-content:space-between; align-items:center; width: 100%;">
+                    <h2 class="title-cc">Compound Circuit</h2>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn" style="background: rgba(255,255,255,0.1); font-size:0.8rem; padding: 5px 10px;" onclick="multiplayer.joinLobby('cc')">🌐 Live Co-op</button>
+                        <div class="rank-badge" style="border-color: var(--accent-green-light); color: var(--accent-green-light);">Score: <span id="cc-score">0</span></div>
+                    </div>
+                </div>
+                
+                <div style="display:flex; justify-content:space-between; width: 100%; color:var(--text-secondary); font-size:0.9rem; margin-top:10px;">
+                    <span>Level <span id="cc-level-id">1</span></span>
+                    <span id="cc-timer-text">00:30</span>
+                </div>
+                <!-- Epic Bottom Timer bar -->
+                <div class="timer-bar-bg"><div class="timer-bar-fill" id="cc-timer"></div></div>
+                
+                <!-- Word visualizer -->
+                <div class="chain-viewer" id="cc-chain-viewer">
+                    <!-- Tiles injected here -->
+                </div>
+
+                <div class="cc-input-area">
+                    <div class="hint-card" id="cc-hint-card">
+                        <div style="font-size: 0.9rem; text-transform: uppercase; color: var(--accent-purple); letter-spacing: 2px;">Target Sequence Insight</div>
+                        <div class="hint-text" id="cc-hint">Loading hint...</div>
+                    </div>
+                    <button class="btn btn-hint" onclick="compoundChainGame.buyHint()" id="cc-buy-hint">Reveal Letter (-50 Pts)</button>
+                    <form id="cc-form" onsubmit="compoundChainGame.submitGuess(event)" class="input-form" style="margin-top:10px;">
+                        <input type="text" id="cc-input" placeholder="Type next element..." autocomplete="off">
+                        <button type="submit" class="btn btn-cc">Link</button>
+                    </form>
+                    <div id="cc-status" class="status-msg"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shiritori Royale Interface -->
+        <div id="game-sr" class="glass-panel hidden animate-slide-up">
+            <button class="back-btn" onclick="app.showCatalogue()">← Return to Nexus</button>
+            <div class="sr-container">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h2 class="title-sr" style="font-size:2rem; margin: 0;">Shiritori Royale</h2>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn" style="background: rgba(255,75,75,0.2); font-size:0.8rem; padding: 5px 10px;" onclick="multiplayer.joinLobby('sr')">⚔️ PvP Beta</button>
+                        <div id="sr-rank-badge" class="rank-badge">Tier: Bronze</div>
+                        <div class="rank-badge" style="border-color: var(--accent-blue); color: var(--accent-blue);">Score: <span id="sr-score">0</span></div>
+                    </div>
+                </div>
+                
+                <!-- Combo Bar -->
+                <div style="display:flex; justify-content:space-between; color:var(--text-secondary); font-size:0.9rem;">
+                    <span>Combo Timer (Faster = More Damage)</span>
+                    <span id="sr-combo-text" style="color:var(--accent-purple); font-weight:bold;">1.0x</span>
+                </div>
+                <div class="timer-bar-bg"><div class="timer-bar-fill" id="sr-timer"></div></div>
+                
+                <!-- Arena Combatants -->
+                <div class="battle-arena">
+                    <div class="player-card" id="sr-player">
+                        <h3>Player</h3>
+                        <div class="health-bar-bg"><div class="health-bar-fill" id="sr-player-hp" style="width: 100%"></div></div>
+                    </div>
+                    <div class="vs-text">VS</div>
+                    <div class="player-card" id="sr-enemy">
+                        <img id="sr-enemy-avatar" class="avatar-img" src="assets/ai_bronze_1776192974545.png" alt="AI Avatar">
+                        <h3 id="sr-enemy-name" style="margin-top:0;">Bronze Grunt</h3>
+                        <div class="health-bar-bg"><div class="health-bar-fill" id="sr-enemy-hp" style="width: 100%"></div></div>
+                    </div>
+                </div>
+
+                <!-- Live status of round -->
+                <div class="status-message" id="sr-status">Prepare for battle...</div>
+
+                <div class="word-history" id="sr-history">
+                    <!-- History injected here -->
+                </div>
+
+                <form id="sr-form" onsubmit="shiritoriGame.submitWord(event)" class="input-form">
+                    <div class="grouped-input">
+                        <div class="start-letter" id="sr-start-letter">?</div>
+                        <input type="text" id="sr-input" autocomplete="off" placeholder="Enter word constraint...">
+                    </div>
+                    <button type="submit" class="btn btn-sr">Attack</button>
+                </form>
+                
+                <div id="sr-post-game" class="hidden" style="text-align:center; margin-top:15px;">
+                    <button class="btn" style="background:#1da1f2; margin-right:10px;" onclick="shiritoriGame.shareResult()">Share Result 🔗</button>
+                    <button class="btn btn-sr" onclick="shiritoriGame.nextMatch()">Continue</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    
+    <!-- Ownership Footer -->
+    <footer style="position: absolute; bottom: 15px; left: 0; width: 100%; text-align: center; z-index: 100; pointer-events: none;">
+        <p style="color: rgba(255,255,255,0.3); font-size: 0.8rem; margin: 0; font-family: 'Inter', sans-serif;">
+            Developed & Engineered by 
+            <a href="https://github.com/pranshumishra27" target="_blank" style="color: var(--accent-blue); text-decoration: none; opacity: 0.8; pointer-events: auto; font-weight: bold; padding: 5px;">Pranshu Mishra</a>
+        </p>
+    </footer>
+
+    <!-- Data includes -->
+    <script src="data/dictionary.js"></script>
+    <script src="data/compound-levels.js"></script>
+    
+    <!-- Supabase Multiplayer Protocol -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Scripts -->
+    <script src="scripts/audio.js"></script>
+    <script src="scripts/effects.js"></script>
+    <script src="scripts/multiplayer.js"></script>
+    <script src="scripts/compound-chain.js"></script>
+    <script src="scripts/shiritori-royale.js"></script>
+    <script src="scripts/app.js"></script>
+</body>
+</html>

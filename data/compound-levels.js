@@ -1,0 +1,22 @@
+const COMPOUND_LEVELS = [
+    { id: 1, chain: ["snow", "ball", "room", "mate"], hints: ["Frozen precipitation", "Round object for games", "Part of a house", "A friendly companion"] },
+    { id: 2, chain: ["sun", "flower", "pot", "hole"], hints: ["Our solar system's star", "A colorful plant", "Container for plants", "A deep cavity"] },
+    { id: 3, chain: ["rain", "bow", "tie", "break"], hints: ["Drops of water", "Curved string weapon", "Worn with a suit", "To separate into pieces"] },
+    { id: 4, align: "easy", chain: ["fire", "wood", "work", "shop"], hints: ["Hot, glowing combustion", "Material from trees", "Labor or a job", "A place to buy things"] },
+    { id: 5, chain: ["water", "fall", "out", "side"], hints: ["Clear liquid", "To drop down", "Not inside", "A surface or edge"] },
+    { id: 6, chain: ["foot", "ball", "park", "way"], hints: ["End of a leg", "Round toy", "Recreation area", "A path or road"] },
+    { id: 7, chain: ["air", "port", "hole", "punch"], hints: ["Invisible gas we breathe", "Dock for ships", "Cavity or gap", "A physical strike"] },
+    { id: 8, chain: ["book", "case", "work", "day"], hints: ["Pages to read", "A container", "Employment effort", "24 hours"] },
+    { id: 9, chain: ["eye", "sight", "seeing", "glass"], hints: ["Organ of vision", "Ability to see", "Observing", "Transparent material"] },
+    { id: 10, chain: ["back", "ground", "water", "melon"], hints: ["Opposite of front", "The earth beneath you", "H2O", "Large sweet fruit"] },
+    { id: 11, chain: ["key", "board", "walk", "way"], hints: ["Unlocks a door", "Flat piece of wood", "Movement on foot", "A path"] },
+    { id: 12, chain: ["light", "house", "boat", "yard"], hints: ["Illumination", "A dwelling", "Water vessel", "Grass around a house"] },
+    { id: 13, chain: ["star", "fish", "bowl", "game"], hints: ["Luminous point in sky", "Aquatic animal", "Deep round dish", "An activity for fun"] },
+    { id: 14, chain: ["car", "wash", "room", "key"], hints: ["Automobile", "To clean", "Division of a house", "Metal piece to unlock"] },
+    { id: 15, chain: ["moon", "light", "weight", "less"], hints: ["Earth's natural satellite", "Not dark", "Heaviness", "Not as much"] },
+    { id: 16, chain: ["time", "table", "cloth", "ing"], hints: ["Measured duration", "Furniture with legs", "Fabric", "Action suffix"] },
+    { id: 17, chain: ["hand", "shake", "down", "town"], hints: ["End of the arm", "To move rapidly back and forth", "Opposite of up", "City center"] },
+    { id: 18, chain: ["head", "light", "hearted", "ness"], hints: ["Top part of body", "Illumination", "Feeling kind or joyful", "State of being suffix"] },
+    { id: 19, chain: ["heart", "beat", "down", "fall"], hints: ["Pumping organ", "Rhythmic pulse", "Opposite of up", "A drop or collapse"] },
+    { id: 20, chain: ["grand", "stand", "point", "less"], hints: ["Magnificent", "To be upright", "A sharp end", "Without purpose"] }
+];
