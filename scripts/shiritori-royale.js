@@ -33,6 +33,10 @@ const shiritoriGame = {
         this.usedWords.clear();
         this.timeLeft = 100;
         this.isPlaying = true;
+        
+        if(typeof app !== 'undefined' && app.player.name) {
+            document.getElementById('sr-player-name-display').textContent = app.player.name;
+        }
 
         if (this.dictionary.size === 0 && typeof DICTIONARY !== 'undefined') {
             this.dictionary = new Set(DICTIONARY);
@@ -173,8 +177,11 @@ const shiritoriGame = {
         statusEl.textContent = msg;
         statusEl.style.color = isError ? "var(--accent-red-light)" : "var(--accent-green-light)";
         if(isError) {
-            document.getElementById('sr-form').classList.add('shake');
-            setTimeout(() => document.getElementById('sr-form').classList.remove('shake'), 400);
+            const form = document.getElementById('sr-form');
+            if(form) {
+                form.classList.add('shake');
+                setTimeout(() => form.classList.remove('shake'), 400);
+            }
         }
     },
 
@@ -185,19 +192,29 @@ const shiritoriGame = {
         const input = document.getElementById('sr-input').value.trim().toLowerCase();
         if(!input) return;
 
+        let errorMsg = "";
         if(!input.startsWith(this.currentLetter.toLowerCase())) {
-            if(typeof sfx !== 'undefined') sfx.playError();
-            this.setStatus(`Word must start with ${this.currentLetter}`, true);
-            return;
+            const msgs = ["Needs to start with " + this.currentLetter + "!", "Whoops, wrong starting letter!", "Follow the chain! Start with " + this.currentLetter];
+            errorMsg = msgs[Math.floor(Math.random() * msgs.length)];
+        } else if(this.usedWords.has(input)) {
+            const msgs = ["Already played that one!", "No repeats allowed, Agent!", "That trick won't work twice!"];
+            errorMsg = msgs[Math.floor(Math.random() * msgs.length)];
+        } else if(!this.dictionary.has(input)) {
+            const msgs = ["Is that even a real word?", "The database says... nope!", "Nice try, but not a word!"];
+            errorMsg = msgs[Math.floor(Math.random() * msgs.length)];
         }
-        if(this.usedWords.has(input)) {
+
+        if(errorMsg) {
             if(typeof sfx !== 'undefined') sfx.playError();
-            this.setStatus('Word already used!', true);
-            return;
-        }
-        if(!this.dictionary.has(input)) {
-            if(typeof sfx !== 'undefined') sfx.playError();
-            this.setStatus('Not a valid word!', true);
+            this.setStatus(errorMsg, true);
+            if(typeof fx !== 'undefined') fx.screenShake(5, 200);
+            
+            setTimeout(() => {
+                const statusEl = document.getElementById('sr-status');
+                if(statusEl && statusEl.textContent === errorMsg) {
+                    this.setStatus('Your turn!', false);
+                }
+            }, 3000);
             return;
         }
 

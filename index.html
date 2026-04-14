@@ -32,10 +32,10 @@
         <div id="catalogue" class="animate-slide-up hidden">
             <!-- Player Stats Profile -->
             <div class="player-profile" style="background: rgba(0,0,0,0.4); padding: 15px 20px; border-radius: 12px; margin-bottom: 30px; text-align: center; border: 1px solid rgba(255,255,255,0.1);">
-                <h3 style="margin: 0 0 10px 0; color: var(--accent-blue);">Agent: <span id="profile-name"></span></h3>
+                <h3 style="margin: 0 0 10px 0; color: var(--accent-blue);">Player: <span id="profile-name"></span></h3>
                 <div style="display:flex; justify-content: center; gap: 20px; font-size: 0.9rem; color: var(--text-secondary);">
-                    <span>Compound Score: <strong id="profile-cc-score" style="color:#fff;">0</strong></span>
-                    <span>Shiritori Score: <strong id="profile-sr-score" style="color:#fff;">0</strong></span>
+                    <span>Compound High Score: <strong id="profile-cc-score" style="color:#fff;">0</strong></span>
+                    <span>Shiritori High Score: <strong id="profile-sr-score" style="color:#fff;">0</strong></span>
                 </div>
             </div>
             
@@ -58,7 +58,10 @@
             <button class="back-btn" onclick="app.showCatalogue()">← Return to Nexus</button>
             <div class="cc-container">
                 <div style="display:flex; justify-content:space-between; align-items:center; width: 100%;">
-                    <h2 class="title-cc">Compound Circuit</h2>
+                    <div>
+                        <h2 class="title-cc">Compound Circuit</h2>
+                        <div id="cc-player-name-display" style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 5px;">Player</div>
+                    </div>
                     <div style="display: flex; gap: 10px;">
                         <button class="btn" style="background: rgba(255,255,255,0.1); font-size:0.8rem; padding: 5px 10px;" onclick="multiplayer.joinLobby('cc')">🌐 Live Co-op</button>
                         <div class="rank-badge" style="border-color: var(--accent-green-light); color: var(--accent-green-light);">Score: <span id="cc-score">0</span></div>
@@ -115,7 +118,7 @@
                 <!-- Arena Combatants -->
                 <div class="battle-arena">
                     <div class="player-card" id="sr-player">
-                        <h3>Player</h3>
+                        <h3 id="sr-player-name-display">Player</h3>
                         <div class="health-bar-bg"><div class="health-bar-fill" id="sr-player-hp" style="width: 100%"></div></div>
                     </div>
                     <div class="vs-text">VS</div>

@@ -10,6 +10,9 @@ const compoundChainGame = {
     init: function() {
         this.score = 0;
         document.getElementById('cc-score').textContent = "0";
+        if(typeof app !== 'undefined' && app.player.name) {
+            document.getElementById('cc-player-name-display').textContent = `Player: ${app.player.name}`;
+        }
         this.loadLevel(0);
     },
 
