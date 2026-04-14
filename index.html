@@ -72,8 +72,10 @@
                     </div>
                 </div>
                 
-                <div style="display:flex; justify-content:space-between; width: 100%; color:var(--text-secondary); font-size:0.9rem; margin-top:10px;">
+                <!-- Timer label + bar -->
+                <div style="display:flex; justify-content:space-between; align-items:center; width:100%; color:var(--text-secondary); font-size:0.85rem; margin-top:10px;">
                     <span>Level <span id="cc-level-id">1</span></span>
+                    <span style="font-size: 0.75rem; color: var(--accent-green-light); opacity: 0.8;">⚡ Bonus Timer — answer faster for more points</span>
                     <span id="cc-timer-text">00:30</span>
                 </div>
                 <!-- Epic Bottom Timer bar -->
@@ -113,9 +115,9 @@
                 </div>
                 
                 <!-- Combo Bar -->
-                <div style="display:flex; justify-content:space-between; color:var(--text-secondary); font-size:0.9rem;">
-                    <span>Combo Timer (Faster = More Damage)</span>
-                    <span id="sr-combo-text" style="color:var(--accent-purple); font-weight:bold;">1.0x</span>
+                <div style="display:flex; justify-content:space-between; align-items:center; color:var(--text-secondary); font-size:0.85rem;">
+                    <span>⚔️ Attack Timer — hit faster to deal bonus damage</span>
+                    <span id="sr-combo-text" style="color:var(--accent-purple); font-weight:bold;">1.0x Combo</span>
                 </div>
                 <div class="timer-bar-bg"><div class="timer-bar-fill" id="sr-timer"></div></div>
                 
@@ -167,6 +169,7 @@
     
     <!-- Data includes -->
     <script src="data/dictionary.js"></script>
+    <script src="data/extra-words.js"></script>
     <script src="data/compound-levels.js"></script>
     
     <!-- Supabase Multiplayer Protocol -->

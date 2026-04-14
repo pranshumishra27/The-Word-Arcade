@@ -39,9 +39,11 @@ const shiritoriGame = {
         }
 
         if (this.dictionary.size === 0 && typeof DICTIONARY !== 'undefined') {
-            // Strict Anti-Cheat: Strip words less than 3 letters and anything non-alphabetic
-            const sanitizedWords = DICTIONARY.filter(w => w.length > 2 && /^[a-zA-Z]+$/.test(w));
-            this.dictionary = new Set(sanitizedWords);
+            // Strict Anti-Cheat: Only real words, 3+ letters, purely alphabetic
+            const sanitized = DICTIONARY.filter(w => w.length > 2 && /^[a-zA-Z]+$/.test(w));
+            // Merge with our curated extra word list to fill gaps in the base dictionary
+            const extras = typeof EXTRA_WORDS !== 'undefined' ? EXTRA_WORDS : [];
+            this.dictionary = new Set([...sanitized, ...extras.map(w => w.toLowerCase())]);
         }
 
         document.getElementById('sr-history').innerHTML = '';
@@ -105,7 +107,7 @@ const shiritoriGame = {
                 document.getElementById('sr-combo-text').style.color = "var(--text-secondary)";
                 document.body.classList.remove('fever-mode');
             }
-            document.getElementById('sr-combo-text').textContent = this.comboMult.toFixed(1) + "x";
+            document.getElementById('sr-combo-text').textContent = this.comboMult.toFixed(1) + "x Combo";
 
             if (this.timeLeft <= 0) {
                 this.timeLeft = 0;
@@ -187,22 +189,21 @@ const shiritoriGame = {
         }
     },
 
-    submitWord: function(e) {
+    submitWord: async function(e) {
         e.preventDefault();
         if(!this.isPlaying) return;
 
-        const input = document.getElementById('sr-input').value.trim().toLowerCase();
+        const inputEl = document.getElementById('sr-input');
+        const input = inputEl.value.trim().toLowerCase();
         if(!input) return;
 
+        // --- Validation Layer 1: Format checks (instant) ---
         let errorMsg = "";
         if(!input.startsWith(this.currentLetter.toLowerCase())) {
             const msgs = ["Needs to start with " + this.currentLetter + "!", "Whoops, wrong starting letter!", "Follow the chain! Start with " + this.currentLetter];
             errorMsg = msgs[Math.floor(Math.random() * msgs.length)];
         } else if(this.usedWords.has(input)) {
-            const msgs = ["Already played that one!", "No repeats allowed, Agent!", "That trick won't work twice!"];
-            errorMsg = msgs[Math.floor(Math.random() * msgs.length)];
-        } else if(!this.dictionary.has(input)) {
-            const msgs = ["Is that even a real word?", "The database says... nope!", "Nice try, but not a word!"];
+            const msgs = ["Already played that one!", "No repeats allowed!", "That trick won't work twice!"];
             errorMsg = msgs[Math.floor(Math.random() * msgs.length)];
         }
 
@@ -210,16 +211,56 @@ const shiritoriGame = {
             if(typeof sfx !== 'undefined') sfx.playError();
             this.setStatus(errorMsg, true);
             if(typeof fx !== 'undefined') fx.screenShake(5, 200);
-            
             setTimeout(() => {
                 const statusEl = document.getElementById('sr-status');
-                if(statusEl && statusEl.textContent === errorMsg) {
-                    this.setStatus('Your turn!', false);
-                }
+                if(statusEl && statusEl.textContent === errorMsg) this.setStatus('Your turn!', false);
             }, 3000);
             return;
         }
 
+        // --- Validation Layer 2: Local dictionary (instant) ---
+        if(this.dictionary.has(input)) {
+            this._acceptWord(input);
+            return;
+        }
+
+        // --- Validation Layer 3: Live Dictionary API fallback ---
+        this.setStatus('Checking word...', false);
+        inputEl.disabled = true;
+
+        try {
+            const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${input}`, {
+                signal: AbortSignal.timeout(4000)
+            });
+
+            if(res.ok) {
+                // Word is real! Cache it in local Set for this session so we don't call API again
+                this.dictionary.add(input);
+                inputEl.disabled = false;
+                this._acceptWord(input);
+            } else {
+                // 404 = not a valid English word
+                inputEl.disabled = false;
+                if(typeof sfx !== 'undefined') sfx.playError();
+                const msgs = ["Is that even a real word?", "The dictionary says... nope!", "Nice try, but not in the dictionary!"];
+                const msg = msgs[Math.floor(Math.random() * msgs.length)];
+                this.setStatus(msg, true);
+                if(typeof fx !== 'undefined') fx.screenShake(5, 200);
+                setTimeout(() => {
+                    const statusEl = document.getElementById('sr-status');
+                    if(statusEl && statusEl.textContent === msg) this.setStatus('Your turn!', false);
+                }, 3000);
+            }
+        } catch(err) {
+            // API offline or timed out — fall back to local dictionary only
+            inputEl.disabled = false;
+            console.warn('Dictionary API unreachable. Using local dictionary only.');
+            if(typeof fx !== 'undefined') fx.toast('Offline mode: Using local dictionary', 'error');
+            this.setStatus('Your turn!', false);
+        }
+    },
+
+    _acceptWord: function(input) {
         this.usedWords.add(input);
         this.addHistory(input, 'player');
         
