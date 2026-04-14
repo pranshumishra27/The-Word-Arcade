@@ -1,62 +1,141 @@
 # 🕹️ The Word Arcade
 
-![Vanilla JS Architecture](https://img.shields.io/badge/Architecture-Vanilla_JS-f7df1e?style=for-the-badge&logo=javascript)
-![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero-success?style=for-the-badge)
+[![Live Demo](https://img.shields.io/badge/Live-the--word--arcade.vercel.app-00d2ff?style=for-the-badge&logo=vercel)](https://the-word-arcade.vercel.app/)
+![Vanilla JS](https://img.shields.io/badge/Built_With-Vanilla_JS-f7df1e?style=for-the-badge&logo=javascript)
+![Zero Dependencies](https://img.shields.io/badge/Dependencies-Zero-00ff87?style=for-the-badge)
 ![Supabase Ready](https://img.shields.io/badge/Multiplayer-Supabase_Ready-3ecf8e?style=for-the-badge&logo=supabase)
+![PWA Ready](https://img.shields.io/badge/PWA-Installable-blueviolet?style=for-the-badge&logo=pwa)
 
-**The Word Arcade** is a highly polished, zero-dependency suite of lexical combat and puzzle games built entirely with high-performance Vanilla JavaScript, HTML5, and CSS3. Engineered without bulky build tools or heavy frameworks, it is designed to run blazingly fast both entirely offline or dynamically hosted on the edge.
+> **The Word Arcade** is a premium, zero-dependency word gaming platform featuring two distinct lexical combat experiences — live dictionary validation, AI opponents with personality, daily challenges, achievement systems, and real-time multiplayer foundations. Built entirely with Vanilla JS, HTML5, and CSS3.
 
-Developed and engineered by [Pranshu Mishra](https://github.com/pranshumishra27).
+**Developed & Engineered by [Pranshu Mishra](https://www.linkedin.com/in/pranshumishra27/) · [LinkedIn →](https://www.linkedin.com/in/pranshumishra27/)**
 
 ---
 
-## 🎮 The Games
+## 🎮 Games
 
-### 1. Compound Chains
-A relaxing, cerebral puzzle module where players must logically link a provided sequence of compound words from start to finish. 
-*   **Dynamic Bonus Engine**: Time is not an enemy, but a reward. Finish rapidly for high bonus multipliers. 
-*   **Progressive Difficulty**: 20 distinct levels scaling from simple two-word fuses to massive associative leaps.
+### 🧩 Compound Chain
+A cerebral puzzle mode where players link compound word sequences from start to finish within a bonus timer.
 
-### 2. Shiritori Royale
-A high-intensity, combative typing arena inspired by the Japanese word game *Shiritori*. Face off against AI avatars by chaining words using the final letter of the previous attack.
-*   **Fever Mode Engine**: Maintaining a fast combo (under 2 seconds per attack) triggers global visual and audio overdrive.
-*   **Adaptive AI Matrix**: Face down the Bronze Grunt up to the Lexical Overlord across complex, expanding vocabularies.
+- **Rogue-lite Runs** — The master pool of 30 levels is shuffled every run. No two play-throughs are the same sequence.
+- **Bonus Timer Engine** — Answer faster to earn higher point multipliers.
+- **Daily Challenge** — A globally seeded puzzle drops every day (same for all players worldwide). Complete it to build your streak.
+
+### ⚔️ Shiritori Royale
+A high-intensity word combat arena. Chain words by their final letter and deal damage to AI opponents.
+
+- **4 AI Tiers** — Bronze Grunt → Silver Adept → Gold Master → Lexical Overlord, each with unique personality, trash talk, and escalating difficulty.
+- **Word Quality Rewards** — 5+ letters = "Nice Hit!" · 8+ = "⚡ Power Strike!" · 11+ = "LEXICAL DESTROYER! 🌌" with screen flash effects.
+- **Fever Mode** — Sustain fast combos to trigger full visual and audio overdrive.
+- **Session Word Memory** — Words used across all tiers within a session are permanently blocked, forcing vocabulary breadth.
+- **Live Dictionary API** — Validated in real-time against `dictionaryapi.dev` for unlimited English vocabulary.
+
+---
+
+## ✨ Platform Features
+
+| Feature | Details |
+|---|---|
+| 🔥 **Daily Streak** | Play the daily compound puzzle each day to maintain your streak |
+| 🏆 **Achievements** | 9 unlockable badges tracked via localStorage with slide-in toasts |
+| 👤 **Player Identity** | Persistent profile with high scores for both games |
+| 📱 **PWA Installable** | Add to home screen on iOS/Android — launches fullscreen like a native app |
+| 🌐 **Live Vocab** | Words validated against real dictionary API — any legitimate English word works |
+| 🚫 **Profanity Guard** | Built-in filter blocks abusive input before it hits the dictionary API |
+| 🔒 **Anti-Tamper** | DOM integrity monitor protects credits and authorship |
+| 🎵 **Audio Synthesis** | Real-time 8-bit SFX via Web Audio API — no external audio files |
 
 ---
 
 ## ⚡ Technical Architecture
 
-This application strictly adheres to an incredibly pure, isolated architecture pattern:
+```
+wordchain-catalogue/
+├── index.html               # Single-page app shell + all views
+├── styles.css               # Full design system (no framework)
+├── data/
+│   ├── dictionary.js        # Primary ~10k word base dictionary
+│   ├── extra-words.js       # 500+ curated game-friendly words
+│   └── compound-levels.js   # 30 unique compound chain levels
+└── scripts/
+    ├── app.js               # Core controller + tutorial + routing
+    ├── daily.js             # Daily challenge engine (date-seeded)
+    ├── achievements.js      # Achievement engine + localStorage
+    ├── compound-chain.js    # Compound Chain game logic
+    ├── shiritori-royale.js  # Shiritori Royale combat engine
+    ├── effects.js           # Canvas particle engine + UI effects
+    ├── audio.js             # Web Audio API sound synthesizer
+    └── multiplayer.js       # Supabase Realtime lobby (beta)
+```
 
-*   **Zero Dependencies**: No Webpack, no NPM installs, no React overhead. The application runs immediately upon rendering the canvas.
-*   **Custom Particle Engine**: Bypasses external graphic libraries by utilizing a custom `<canvas>` based `effects.js` particle synthesizer for explosions and floating points.
-*   **Audio Synthesis**: Employs organic Web Audio API oscillators to generate real-time 8-bit sound effects (hits, crits, error bells) without relying on heavy external `.mp3` loading.
-*   **Event-Driven Economy**: Features isolated game states with a persistent global identity overlay using browser `localStorage` to securely save High Scores across sessions.
+**Key design decisions:**
+- **Zero build tooling** — runs by opening `index.html` directly with no server
+- **3-layer dictionary validation** — local Set → curated extras → live API → graceful offline fallback
+- **Namespace-based modules** — all JS lives in global const objects, no module bundler needed
+- **Session-scoped word memory** — `usedWords` persists across tiers but resets on Arcade exit
 
 ---
 
-## 🚀 Quick Start / Local Deployment
+## 🚀 Quick Start
 
-Because the architecture relies on zero build-logic, firing up the Arcade locally takes roughly 2 seconds:
+```bash
+git clone https://github.com/pranshumishra27/the-word-arcade.git
+cd the-word-arcade
 
-1. Clone the repository: `git clone https://github.com/pranshumishra27/the-word-arcade.git`
-2. Open the directory.
-3. Simply double-click `index.html` to instantly run the application natively in your browser. No server required.
+# Option 1: Open directly (no server needed)
+open index.html
+
+# Option 2: Local dev server
+npx serve .
+```
+
+Visit **[the-word-arcade.vercel.app](https://the-word-arcade.vercel.app/)** for the live production version.
 
 ---
 
-## 🌐 Multiplayer Roadmap (Supabase Integration)
+## 🌐 Multiplayer (Coming Soon)
 
-The frontend architecture and Realtime UI lobbies for **PvP Betting & Co-Op** are fully established. 
-The application awaits a configuration of `multiplayer.js` with live environment keys to route WebSocket events via **Supabase**.
+The PvP lobby frontend is complete. To activate live multiplayer:
+
+1. Create a project at [supabase.com](https://supabase.com)
+2. Get your `Project URL` and `Anon Key`
+3. Update `scripts/multiplayer.js`:
 
 ```javascript
 const supabaseConfig = {
-    url: 'PRODUCTION_URL_HERE',
-    key: 'PRODUCTION_ANON_KEY_HERE'
+    url: 'YOUR_SUPABASE_URL',
+    key: 'YOUR_ANON_KEY'
 };
 ```
 
+4. Push to Vercel — multiplayer goes live instantly.
+
 ---
 
-*Open Source under the MIT License.*
+## 🏆 Achievement Badges
+
+| Badge | Icon | How to Earn |
+|---|---|---|
+| First Word! | 🌟 | Submit your first word in Shiritori Royale |
+| Speed Demon | ⚡ | Answer 5 words under 3 seconds each in one match |
+| Logophile | 📚 | Play a word with 10 or more letters |
+| Dragon Slayer | 🐉 | Defeat the Lexical Overlord |
+| Combo King | 👑 | Sustain a 2.0× combo for 3 consecutive hits |
+| Perfect Chain | 💎 | Complete Compound Chain without hints |
+| Streak Starter | 🔥 | Maintain a 3-day Daily Challenge streak |
+| Weekly Warrior | 🏆 | Maintain a 7-day Daily Challenge streak |
+| Arcade Legend | 🌌 | Maintain a 30-day Daily Challenge streak |
+
+---
+
+## 📄 License
+
+Open Source under the [MIT License](LICENSE).
+
+---
+
+<p align="center">
+  Built with ❤️ by <a href="https://www.linkedin.com/in/pranshumishra27/"><strong>Pranshu Mishra</strong></a>
+  <br>
+  <a href="https://www.linkedin.com/in/pranshumishra27/">LinkedIn</a> · <a href="https://the-word-arcade.vercel.app/">Live Demo</a>
+</p>

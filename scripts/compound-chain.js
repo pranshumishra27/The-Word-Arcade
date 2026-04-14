@@ -10,14 +10,32 @@ const compoundChainGame = {
 
     init: function() {
         this.score = 0;
+        this.hintUsed = false;
+        this.isDailyMode = false;
         document.getElementById('cc-score').textContent = "0";
         if(typeof app !== 'undefined' && app.player.name) {
             document.getElementById('cc-player-name-display').textContent = `Player: ${app.player.name}`;
         }
-        
         let pool = [...COMPOUND_LEVELS].sort(() => 0.5 - Math.random());
         this.currentRun = pool.slice(0, 10);
-        
+        this.loadLevel(0);
+    },
+
+    // Daily challenge mode — loads a single seeded level
+    initDaily: function() {
+        this.score = 0;
+        this.hintUsed = false;
+        this.isDailyMode = true;
+        document.getElementById('cc-score').textContent = "0";
+        if(typeof app !== 'undefined' && app.player.name) {
+            document.getElementById('cc-player-name-display').textContent = `Player: ${app.player.name}`;
+        }
+        if(typeof daily !== 'undefined') {
+            const lvl = daily.getDailyLevel();
+            this.currentRun = [lvl];
+        } else {
+            this.currentRun = [COMPOUND_LEVELS[0]];
+        }
         this.loadLevel(0);
     },
 

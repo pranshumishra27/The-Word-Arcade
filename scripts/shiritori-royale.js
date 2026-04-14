@@ -1,8 +1,31 @@
 const AI_TIERS = [
-    { name: "Bronze Grunt", hp: 100, dmgMult: 0.5, speed: 2000, color: "#cd7f32", img: "ai_bronze_1776192974545.png" },
-    { name: "Silver Adept", hp: 150, dmgMult: 1.0, speed: 1500, color: "#c0c0c0", img: "ai_silver_1776192993743.png" },
-    { name: "Gold Master", hp: 250, dmgMult: 1.5, speed: 800, color: "#ffd700", img: "ai_gold_1776193007883.png" },
-    { name: "Lexical Overlord", hp: 400, dmgMult: 2.0, speed: 400, color: "#ff4b4b", img: "ai_overlord_1776193024488.png" }
+    { name: "Bronze Grunt",    hp: 100, dmgMult: 0.5, speed: 2000, color: "#cd7f32", img: "ai_bronze_1776192974545.png" },
+    { name: "Silver Adept",   hp: 150, dmgMult: 1.0, speed: 1500, color: "#c0c0c0", img: "ai_silver_1776192993743.png" },
+    { name: "Gold Master",    hp: 250, dmgMult: 1.5, speed: 800,  color: "#ffd700", img: "ai_gold_1776193007883.png"   },
+    { name: "Lexical Overlord",hp:400, dmgMult: 2.0, speed: 400,  color: "#ff4b4b", img: "ai_overlord_1776193024488.png" }
+];
+
+const AI_PERSONALITIES = [
+    { // Bronze Grunt
+        intro:   ["I'll crush you easily, rookie.",       "Don't waste my time, amateur.",          "You won't last long."],
+        winning: ["Too slow!",                             "Is that all you've got?",                "Struggle harder."],
+        losing:  ["Lucky shot...",                         "You got me this time.",                  "I'll get you next round."]
+    },
+    { // Silver Adept
+        intro:   ["Your vocabulary is... basic.",          "I hope you brought more than two-syllable words.", "Let's see what you've got."],
+        winning: ["Predictable.",                           "Try harder.",                            "Your words bore me."],
+        losing:  ["Not bad, not bad.",                      "You surprised me.",                      "My guard was down."]
+    },
+    { // Gold Master
+        intro:   ["Every word you know, I know better.",   "You've come far. It ends here.",         "I appreciate the effort. Truly."],
+        winning: ["Flawless lexicon.",                      "Your defeat was inevitable.",            "Perhaps study more before returning."],
+        losing:  ["Impressive. Very.",                      "You've earned this victory.",            "I underestimated your command."]
+    },
+    { // Lexical Overlord
+        intro:   ["I am the Lexical Overlord. Submit.",    "No word you know can stop me.",          "Your words are dust. My words are galaxies."],
+        winning: ["OBLITERATED.",                           "Your vocabulary is a rounding error.",   "Did you think you were special?"],
+        losing:  ["...Impossible.",                         "You are worthy of this victory.",        "The Arcade has a new champion."]
+    }
 ];
 
 const shiritoriGame = {
@@ -12,14 +35,26 @@ const shiritoriGame = {
     enemyHp: 100,
     maxPlayerHp: 100,
     currentLetter: '',
-    usedWords: new Set(),
-    dictionary: new Set(),
     isPlaying: false,
-    
     currentTier: 0,
     lastWordTime: 0,
     comboMult: 1.0,
     score: 0,
+
+    // MATCH-SCOPED: Reset on every new match
+    usedWords: new Set(),
+
+    // SESSION-SCOPED: Built once per browser session, persists across matches
+    // API-validated words are cached here so we never re-call the API for the same word
+    dictionary: new Set(),
+    dictionaryReady: false,
+
+    // Common profane/abusive words to block regardless of dictionary
+    PROFANITY: new Set([
+        "fuck","shit","cunt","bitch","asshole","bastard","damn","dick","cock",
+        "pussy","nigger","nigga","faggot","slut","whore","retard","twat",
+        "wank","piss","arse","bollocks","motherfucker","fuckup","shithead"
+    ]),
 
     init: function() {
         const tierData = AI_TIERS[this.currentTier];
@@ -30,7 +65,10 @@ const shiritoriGame = {
         this.comboMult = 1.0;
         this.score = 0;
         document.getElementById('sr-score').textContent = "0";
-        this.usedWords.clear();
+
+        // NOTE: usedWords is intentionally NOT reset here.
+        // Words played across all tiers in this session remain blocked.
+        // usedWords only resets when the player exits to the main Arcade menu.
         this.timeLeft = 100;
         this.isPlaying = true;
         
@@ -38,12 +76,16 @@ const shiritoriGame = {
             document.getElementById('sr-player-name-display').textContent = app.player.name;
         }
 
-        if (this.dictionary.size === 0 && typeof DICTIONARY !== 'undefined') {
-            // Strict Anti-Cheat: Only real words, 3+ letters, purely alphabetic
+        // Dictionary is built ONCE per browser session — words are cached across matches
+        // This means API-validated words (like 'hustle') never need to be re-fetched
+        if (!this.dictionaryReady && typeof DICTIONARY !== 'undefined') {
             const sanitized = DICTIONARY.filter(w => w.length > 2 && /^[a-zA-Z]+$/.test(w));
-            // Merge with our curated extra word list to fill gaps in the base dictionary
             const extras = typeof EXTRA_WORDS !== 'undefined' ? EXTRA_WORDS : [];
-            this.dictionary = new Set([...sanitized, ...extras.map(w => w.toLowerCase())]);
+            this.dictionary = new Set([
+                ...sanitized,
+                ...extras.map(w => w.toLowerCase())
+            ]);
+            this.dictionaryReady = true;
         }
 
         document.getElementById('sr-history').innerHTML = '';
@@ -56,7 +98,7 @@ const shiritoriGame = {
             avatarEl.style.borderColor = tierData.color;
         }
 
-        document.getElementById('sr-rank-badge').textContent = `Tier: ${tierData.name}`;
+        document.getElementById('sr-rank-badge').textContent = `Tier ${this.currentTier + 1} / ${AI_TIERS.length}`;
         document.getElementById('sr-post-game').classList.add('hidden');
         document.getElementById('sr-form').classList.remove('hidden');
         document.getElementById('sr-input').disabled = false;
@@ -66,11 +108,31 @@ const shiritoriGame = {
         const form = document.getElementById('sr-form');
         form.onsubmit = this.submitWord.bind(this);
         
-        const startWords = ["APPLE", "TIGER", "HOUSE", "TRAIN", "GHOST", "SWORD", "MAGIC"];
+        // AI intro quote
+        const personality = AI_PERSONALITIES[this.currentTier];
+        if (personality) {
+            const quote = personality.intro[Math.floor(Math.random() * personality.intro.length)];
+            const quoteEl = document.getElementById('sr-ai-quote');
+            if (quoteEl) {
+                quoteEl.textContent = `"${quote}" — ${tierData.name}`;
+                quoteEl.classList.remove('hidden');
+                quoteEl.style.color = tierData.color;
+                setTimeout(() => quoteEl.classList.add('hidden'), 4000);
+            }
+        }
+        
+        const startWords = ["APPLE","TIGER","HOUSE","TRAIN","GHOST","SWORD","MAGIC","RIVER","FLAME","STORM"];
         const initWord = startWords[Math.floor(Math.random() * startWords.length)];
         this.addHistory(initWord, 'enemy');
         this.currentLetter = initWord.slice(-1).toUpperCase();
         this.usedWords.add(initWord.toLowerCase());
+        
+        // Update next button
+        const nextBtn = document.getElementById('sr-next-btn');
+        if (nextBtn) {
+            const nextTier = AI_TIERS[this.currentTier + 1];
+            nextBtn.textContent = nextTier ? `Fight ${nextTier.name} →` : 'Play Again →';
+        }
         
         this.updateUI();
         this.setStatus('Round Start! Word ends in ' + this.currentLetter, false);
@@ -83,6 +145,8 @@ const shiritoriGame = {
         this.isPlaying = false;
         clearInterval(this.timer);
         document.body.classList.remove('fever-mode');
+        // Reset session-scoped used words only when player exits to Arcade
+        this.usedWords = new Set();
     },
 
     startTimer: function() {
@@ -197,13 +261,30 @@ const shiritoriGame = {
         const input = inputEl.value.trim().toLowerCase();
         if(!input) return;
 
+        // --- Validation Layer 0: Profanity guard (instant, always first) ---
+        if(this.PROFANITY.has(input)) {
+            if(typeof sfx !== 'undefined') sfx.playError();
+            this.setStatus("Keep it clean! Try another word. 🚫", true);
+            inputEl.value = '';
+            setTimeout(() => {
+                const statusEl = document.getElementById('sr-status');
+                if(statusEl && statusEl.textContent.includes('clean')) this.setStatus('Your turn!', false);
+            }, 2500);
+            return;
+        }
+
         // --- Validation Layer 1: Format checks (instant) ---
         let errorMsg = "";
         if(!input.startsWith(this.currentLetter.toLowerCase())) {
             const msgs = ["Needs to start with " + this.currentLetter + "!", "Whoops, wrong starting letter!", "Follow the chain! Start with " + this.currentLetter];
             errorMsg = msgs[Math.floor(Math.random() * msgs.length)];
         } else if(this.usedWords.has(input)) {
-            const msgs = ["Already played that one!", "No repeats allowed!", "That trick won't work twice!"];
+            // usedWords persists across ALL tiers in this session
+            const msgs = [
+                "You already used that word this session!",
+                "That word is burned — find a fresh one!",
+                "Used words stay banned all session long!"
+            ];
             errorMsg = msgs[Math.floor(Math.random() * msgs.length)];
         }
 
@@ -218,7 +299,7 @@ const shiritoriGame = {
             return;
         }
 
-        // --- Validation Layer 2: Local dictionary (instant) ---
+        // --- Validation Layer 2: Local dictionary (instant, session-cached) ---
         if(this.dictionary.has(input)) {
             this._acceptWord(input);
             return;
@@ -268,16 +349,58 @@ const shiritoriGame = {
         const lastLetter = input.slice(-1).toLowerCase();
         
         if(['x', 'z', 'q', 'j', 'v'].includes(lastLetter)) baseDmg *= 1.5;
-        
         let finalDmg = baseDmg * this.comboMult;
         
-        // Score calculation
         const wordScore = Math.floor(finalDmg * 15);
         this.score += wordScore;
         document.getElementById('sr-score').textContent = this.score;
         
         const inputRect = document.getElementById('sr-input').getBoundingClientRect();
-        fx.floatingText(`+${wordScore}`, inputRect.left + inputRect.width/2, inputRect.top - 20, '#f2c94c', '2rem');
+        const cx = inputRect.left + inputRect.width / 2;
+        const cy = inputRect.top - 20;
+
+        // ── Word Quality Celebrations ──────────────────────────
+        const len = input.length;
+        if (len >= 11) {
+            // LEGENDARY: screen flash + massive banner
+            fx.floatingText('LEXICAL DESTROYER! 🌌', cx, cy - 40, '#b34bff', '2.5rem');
+            fx.floatingText(`+${wordScore}`, cx, cy, '#f2c94c', '2.2rem');
+            fx.createExplosion(cx, cy, '#b34bff', 60);
+            fx.screenPulse();
+            if(typeof sfx !== 'undefined') sfx.playCrit();
+            if(typeof achievements !== 'undefined') achievements.unlock('logophile');
+        } else if (len >= 8) {
+            // EPIC: power strike
+            fx.floatingText('⚡ Power Strike!', cx, cy - 30, '#ffd700', '1.8rem');
+            fx.floatingText(`+${wordScore}`, cx, cy, '#f2c94c', '2rem');
+            fx.createExplosion(cx, cy, '#ffd700', 35);
+            if(typeof sfx !== 'undefined') sfx.playCrit();
+        } else if (len >= 5) {
+            // NICE: solid hit
+            fx.floatingText('Nice Hit!', cx, cy - 25, '#00ff87', '1.4rem');
+            fx.floatingText(`+${wordScore}`, cx, cy, '#f2c94c', '2rem');
+            fx.createExplosion(cx, cy, '#00ff87', 20);
+            if(typeof sfx !== 'undefined') sfx.playSuccess();
+        } else {
+            // BASIC: standard
+            fx.floatingText(`+${wordScore}`, cx, cy, '#f2c94c', '2rem');
+            fx.createExplosion(cx, cy, '#00ff87', 10);
+            if(typeof sfx !== 'undefined') sfx.playSuccess();
+        }
+
+        // Achievement hooks
+        if(typeof achievements !== 'undefined') {
+            if (!this._firstWordDone) {
+                achievements.unlock('first_word');
+                this._firstWordDone = true;
+            }
+            if (this.comboMult >= 2.0) {
+                this._comboHits = (this._comboHits || 0) + 1;
+                if (this._comboHits >= 3) achievements.unlock('combo_king');
+            } else {
+                this._comboHits = 0;
+            }
+        }
 
         this.damage('enemy', finalDmg);
         this.currentLetter = lastLetter.toUpperCase();
@@ -292,6 +415,7 @@ const shiritoriGame = {
         this.updateUI();
         this.enemyTurn();
     },
+
 
     enemyTurn: function() {
         this.isPlaying = false; 
