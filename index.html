@@ -111,19 +111,21 @@
                 </div>
             </div>
             
-            <!-- Game Cards -->
-            <div style="display: flex; gap: 30px; justify-content: center; flex-wrap: wrap;">
-                <div class="game-card glass-panel card-cc" onclick="app.launchGame('cc')">
-                    <div class="icon">🧩</div>
-                    <h2>Compound Chain</h2>
-                    <p>Connect compound words logically from start to finish.</p>
-                </div>
-                <div class="game-card glass-panel card-sr" onclick="app.launchGame('sr')">
-                    <div class="icon">⚔️</div>
-                    <h2>Shiritori Royale</h2>
-                    <p>Battle AI Overlords through ranks with your vocabulary.</p>
-                </div>
+        <!-- Game Cards -->
+        <div style="display: flex; gap: 30px; justify-content: center; flex-wrap: wrap;">
+            <div class="game-card glass-panel card-cc" onclick="app.launchGame('cc')">
+                <div class="icon">🧩</div>
+                <h2>Compound Chain</h2>
+                <p>Link compound words logically from start to finish. Race the bonus timer for maximum points.</p>
+                <div class="card-tag">🧠 Puzzle · Solo · Daily</div>
             </div>
+            <div class="game-card glass-panel card-sr" onclick="app.launchGame('sr')">
+                <div class="icon">⚔️</div>
+                <h2>Shiritori Royale</h2>
+                <p>Battle AI Overlords by chaining words on the last letter. Faster combos deal more damage.</p>
+                <div class="card-tag">🔥 Combat · Tiers · Session</div>
+            </div>
+        </div>
         </div>
 
         <!-- ── COMPOUND CHAIN INTERFACE ──────────────────────── -->
@@ -162,7 +164,13 @@
                         <input type="text" id="cc-input" placeholder="Type the linking word..." autocomplete="off">
                         <button type="submit" class="btn btn-cc">Link ⚡</button>
                     </form>
-                    <div id="cc-status" class="status-msg"></div>
+                    <div class="status-msg" id="cc-status"></div>
+                    <div class="status-msg" id="cc-status-timer" style="color: var(--text-secondary); font-size:0.85rem;"></div>
+                </div>
+                <!-- CC Post-game share -->
+                <div id="cc-post-game" class="hidden" style="text-align:center; margin-top:15px;">
+                    <button class="btn" style="background:#1da1f2;" onclick="compoundChainGame.shareResult()">Share Score 🔗</button>
+                    <button class="btn btn-cc" style="margin-left:10px;" onclick="compoundChainGame.init()">New Run →</button>
                 </div>
             </div>
         </div>
@@ -193,6 +201,7 @@
                 <!-- Arena Combatants -->
                 <div class="battle-arena">
                     <div class="player-card" id="sr-player">
+                        <div class="player-avatar-icon">🦸</div>
                         <h3 id="sr-player-name-display">Player</h3>
                         <div class="health-bar-bg"><div class="health-bar-fill" id="sr-player-hp" style="width: 100%"></div></div>
                     </div>

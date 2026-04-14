@@ -518,50 +518,55 @@ const shiritoriGame = {
             if (this.currentTier < AI_TIERS.length - 1) {
                 this.currentTier++;
             } else {
-                alert("You are the absolute champion!");
-                this.currentTier = 0; // loop
+                fx.toast('🏆 You are the Lexical Champion! Starting over...', 'success');
+                setTimeout(() => { this.currentTier = 0; this.init(); }, 3000);
+                return;
             }
         }
         this.init();
     },
 
     shareResult: function() {
-        const result = this.playerHp > 0 ? "VICTORY" : "DEFEAT";
-        const tier = AI_TIERS[this.currentTier].name;
-        
-        let grid = "";
-        for(let i=0; i<5; i++) {
-            grid += Math.random() > 0.3 ? "🟩" : "🟨";
-        }
-        
-        const text = `⚔️ Wordchain Nexus | Shiritori Royale\nResult: ${result} against ${tier}\n${grid}\nCombos Chained! Play now!`;
-        
-        const copySuccess = () => {
-            this.setStatus("Copied to clipboard!", false);
-            fx.floatingText("Copied! 🔗", window.innerWidth/2, window.innerHeight/2, '#1da1f2');
+        const won    = this.playerHp > 0;
+        const tier   = AI_TIERS[this.currentTier].name;
+        const result = won ? 'VICTORY ⚔️' : 'DEFEAT 💀';
+        const bar    = ['🟩','🟩','🟨','🟥','🟩'].sort(() => 0.5 - Math.random()).join('');
+        const text   =
+`⚔️ The Word Arcade — Shiritori Royale
+${result} vs ${tier}
+Score: ${this.score} pts
+${bar}
+Play free at https://the-word-arcade.vercel.app`;
+
+        const onCopied = () => {
+            fx.toast('Result copied! Share it! 🔗', 'success');
         };
 
-        if (navigator.clipboard && window.isSecureContext) {
-            navigator.clipboard.writeText(text).then(copySuccess).catch(() => fallbackCopy());
+        if (navigator.share) {
+            navigator.share({ title: 'The Word Arcade', text })
+                .catch(() => this._clipboardCopy(text, onCopied));
         } else {
-            fallbackCopy();
+            this._clipboardCopy(text, onCopied);
         }
+    },
 
-        function fallbackCopy() {
-            const textArea = document.createElement("textarea");
-            textArea.value = text;
-            textArea.style.position = "fixed";
-            textArea.style.left = "-999999px";
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
-            try {
-                document.execCommand('copy');
-                copySuccess();
-            } catch (err) {
-                console.error('Fallback: Oops, unable to copy', err);
-            }
-            document.body.removeChild(textArea);
+    _clipboardCopy: function(text, onSuccess) {
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(onSuccess).catch(() => {
+                this._execCopy(text, onSuccess);
+            });
+        } else {
+            this._execCopy(text, onSuccess);
         }
+    },
+
+    _execCopy: function(text, onSuccess) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        Object.assign(ta.style, { position:'fixed', left:'-9999px', top:'-9999px' });
+        document.body.appendChild(ta);
+        ta.focus(); ta.select();
+        try { document.execCommand('copy'); onSuccess(); } catch(e) {}
+        ta.remove();
     }
 };

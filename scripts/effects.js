@@ -99,36 +99,56 @@ const fx = {
     floatingText: function(text, x, y, color, size = '1.5rem', bold = true) {
         const el = document.createElement('div');
         el.textContent = text;
-        el.style.position = 'fixed';
-        el.style.left = x + 'px';
-        el.style.top = y + 'px';
-        el.style.color = color;
-        el.style.fontSize = size;
-        el.style.fontWeight = bold ? '900' : 'bold';
-        el.style.fontFamily = "'Outfit', sans-serif";
-        el.style.zIndex = '1000';
-        el.style.pointerEvents = 'none';
-        el.style.transform = 'translate(-50%, -50%)';
-        el.style.textShadow = `0 2px 10px ${color}`;
+        Object.assign(el.style, {
+            position:      'fixed',
+            left:          x + 'px',
+            top:           y + 'px',
+            color:         color,
+            fontSize:      size,
+            fontWeight:    bold ? '900' : 'bold',
+            fontFamily:    "'Outfit', sans-serif",
+            zIndex:        '10000',
+            pointerEvents: 'none',
+            textShadow:    `0 0 20px ${color}, 0 2px 8px rgba(0,0,0,0.8)`,
+            // Start punched-in: tiny, centred on origin
+            transform:     'translate(-50%, -50%) scale(0.3)',
+            opacity:       '0',
+            transition:    'transform 0.12s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.08s ease',
+            willChange:    'transform, opacity',
+        });
         document.body.appendChild(el);
-        
-        let life = 1;
-        let pos = y;
-        const anim = () => {
-            life -= 0.01;
-            pos -= 1.0;
-            el.style.top = pos + 'px';
-            el.style.opacity = life;
-            el.style.transform = `translate(-50%, -50%) scale(${1 + (1 - life) * 0.5})`;
-            
-            if (life > 0) {
-                requestAnimationFrame(anim);
-            } else {
-                document.body.removeChild(el);
-            }
-        };
-        requestAnimationFrame(anim);
+
+        // Phase 1: Punch in (scale 0.3 → 1.15) — feels snappy
+        requestAnimationFrame(() => {
+            el.style.opacity   = '1';
+            el.style.transform = 'translate(-50%, -50%) scale(1.15)';
+
+            // Phase 2: Settle (1.15 → 1.0) then float upward and fade
+            setTimeout(() => {
+                el.style.transition = 'none';
+                el.style.transform  = 'translate(-50%, -50%) scale(1)';
+
+                let vy = 2.2;         // float speed (px/frame)
+                let alpha = 1;
+                const decay = 0.018; // fade speed
+
+                const float = () => {
+                    y   -= vy;
+                    vy  *= 0.97;      // decelerate — eases to a stop
+                    alpha -= decay;
+                    el.style.top     = y + 'px';
+                    el.style.opacity = Math.max(0, alpha);
+                    if (alpha > 0) {
+                        requestAnimationFrame(float);
+                    } else {
+                        el.remove();
+                    }
+                };
+                requestAnimationFrame(float);
+            }, 140);
+        });
     },
+
 
     toast: function(message, type = 'error') {
         const el = document.createElement('div');

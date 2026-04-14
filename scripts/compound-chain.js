@@ -62,6 +62,10 @@ const compoundChainGame = {
         document.getElementById('cc-level-id').textContent = (index + 1) + " / " + this.currentRun.length;
         document.getElementById('cc-input').value = '';
         document.getElementById('cc-status').textContent = '';
+        const timerLabel = document.getElementById('cc-status-timer');
+        if (timerLabel) timerLabel.textContent = '';
+        const postEl = document.getElementById('cc-post-game');
+        if (postEl) postEl.classList.add('hidden');
         
         this.renderViewer();
         this.startTimer();
@@ -74,9 +78,9 @@ const compoundChainGame = {
 
     startTimer: function() {
         clearInterval(this.timer);
-        const timerFill = document.getElementById('cc-timer');
-        const timerText = document.getElementById('cc-timer-text');
-        const statusEl  = document.getElementById('cc-status');
+        const timerFill  = document.getElementById('cc-timer');
+        const timerText  = document.getElementById('cc-timer-text');
+        const timerLabel = document.getElementById('cc-status-timer'); // separate quiet line
 
         this.timer = setInterval(() => {
             if(!this.isPlaying) return;
@@ -88,19 +92,21 @@ const compoundChainGame = {
             timerFill.style.width = pct + '%';
 
             if(this.timeLeft > 0) {
-                // Show countdown while bonus is still active
                 timerText.textContent = "⚡ " + this.timeLeft + "s bonus";
                 timerFill.style.background = pct > 50
                     ? 'linear-gradient(90deg, var(--accent-green-light), var(--accent-green-dark))'
                     : pct > 20
                         ? 'linear-gradient(90deg, #f2c94c, #f2994a)'
                         : 'linear-gradient(90deg, var(--accent-red-light), var(--accent-red-dark))';
-                statusEl.textContent = '';
+                if (timerLabel) timerLabel.textContent = '';
             } else {
                 timerText.textContent = "No bonus";
                 timerFill.style.width = '0%';
-                statusEl.textContent = "Bonus timer gone — answer anytime!";
-                statusEl.style.color = "var(--text-secondary)";
+                // Write to the TIMER label, not the error label
+                if (timerLabel) {
+                    timerLabel.textContent = "Bonus time gone — answer anytime!";
+                    timerLabel.style.color = "var(--text-secondary)";
+                }
             }
         }, 1000);
     },
@@ -205,7 +211,36 @@ const compoundChainGame = {
         }
     },
 
-    submitGuess: function(e) {
+    shareResult: function() {
+        const text =
+`🧩 The Word Arcade — Compound Chain
+Score: ${this.score} pts across ${this.currentLevelId} levels
+${'🟩'.repeat(Math.min(this.currentLevelId,5))}${'⬛'.repeat(Math.max(0,5-this.currentLevelId))}
+Play free at https://the-word-arcade.vercel.app`;
+
+        const onCopied = () => fx.toast('Score copied! Share it! 🔗', 'success');
+
+        if (navigator.share) {
+            navigator.share({ title: 'The Word Arcade', text }).catch(() => {
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(text).then(onCopied);
+                }
+            });
+        } else if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(onCopied);
+        } else {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            Object.assign(ta.style, { position:'fixed', left:'-9999px' });
+            document.body.appendChild(ta);
+            ta.focus(); ta.select();
+            try { document.execCommand('copy'); onCopied(); } catch(e) {}
+            ta.remove();
+        }
+    }
+};
+
+
         e.preventDefault();
         const inputEl = document.getElementById('cc-input');
         const guess = inputEl.value.trim().toLowerCase();
@@ -221,16 +256,13 @@ const compoundChainGame = {
             document.getElementById('cc-status').textContent = '';
             if(typeof sfx !== 'undefined') sfx.playSuccess();
             
-            // Dynamic Bonus Calculation
             const bonus = Math.floor((this.timeLeft / this.maxTime) * 20) + 10;
             this.score += bonus;
             document.getElementById('cc-score').textContent = this.score;
             fx.floatingText(`+${bonus}`, elRect.left + elRect.width/2, elRect.top - 20, '#00ff87', '2rem');
             fx.createExplosion(elRect.left + elRect.width/2, elRect.top, '#00ff87', 20);
             
-            // Reset Bonus Timer
             this.timeLeft = this.maxTime;
-
             this.renderViewer();
         } else {
             if(typeof sfx !== 'undefined') sfx.playError();
@@ -253,7 +285,6 @@ const compoundChainGame = {
             fx.screenShake(5, 200);
             setTimeout(() => form.classList.remove('shake'), 400);
             
-            // Clear the text after a few seconds so it doesn't stay there forever
             setTimeout(() => {
                 if(document.getElementById('cc-status').textContent === randomError) {
                     document.getElementById('cc-status').textContent = "";
