@@ -336,6 +336,108 @@ const shiritoriGame = {
         }
     },
 
+    // ── Levenshtein distance between two strings ──
+    _levenshtein: function(a, b) {
+        const m = a.length, n = b.length;
+        const dp = Array.from({ length: m + 1 }, (_, i) => Array.from({ length: n + 1 }, (_, j) => i === 0 ? j : j === 0 ? i : 0));
+        for (let i = 1; i <= m; i++) {
+            for (let j = 1; j <= n; j++) {
+                dp[i][j] = a[i-1] === b[j-1]
+                    ? dp[i-1][j-1]
+                    : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+            }
+        }
+        return dp[m][n];
+    },
+
+    // Returns { word, distance } of the closest dictionary word starting with `letter`,
+    // or null if the dictionary is empty / no match found within max 5 edits.
+    _getClosestWord: function(input, letter) {
+        let best = null;
+        let bestDist = Infinity;
+        const lc = letter.toLowerCase();
+        for (const word of this.dictionary) {
+            if (!word.startsWith(lc)) continue;
+            const d = this._levenshtein(input, word);
+            if (d < bestDist) {
+                bestDist = d;
+                best = word;
+                // Early exit — can't do better than 1 edit
+                if (d <= 1) break;
+            }
+        }
+        return best ? { word: best, distance: bestDist } : null;
+    },
+
+    // Builds a contextual error message based on how close the player's word
+    // was to a valid dictionary entry. Tier personality is layered on top.
+    _getInvalidWordMessage: function(input) {
+        const closest = this._getClosestWord(input, this.currentLetter);
+        const tier = this.currentTier;
+
+        if (closest && closest.distance <= 2) {
+            // Near-miss — close to a real word, give encouraging / teasing hint
+            const nearMissMessages = [
+                [
+                    // Bronze — casual & encouraging
+                    `Almost! Did you mean "${closest.word}"? 🤔`,
+                    `So close! "${closest.word}" would've worked! 💪`,
+                    `One letter off! Try "${closest.word}" next time! ✨`,
+                ],
+                [
+                    // Silver — wry acknowledgment
+                    `Interesting attempt. "${closest.word}" exists though. 🧐`,
+                    `Close, but no. "${closest.word}" is what you were reaching for.`,
+                    `Almost cracked it — "${closest.word}" was right there! 🔎`,
+                ],
+                [
+                    // Gold — backhanded
+                    `Impressive effort, but "${closest.word}" was the word you sought.`,
+                    `A skilled mind wobbles — "${closest.word}" was your target. 🎯`,
+                    `You were one move away. "${closest.word}" would've landed. 🔥`,
+                ],
+                [
+                    // Overlord — theatrical
+                    `Even you were so close... "${closest.word}" slipped through your fingers. 😈`,
+                    `"${closest.word}" — so near, yet so beneath you. Try harder.`,
+                    `A glimmer of potential. "${closest.word}" was the word. Don't waste it. 🌌`,
+                ]
+            ];
+            const pool = nearMissMessages[Math.min(tier, 3)];
+            return pool[Math.floor(Math.random() * pool.length)];
+        } else {
+            // Far off — the word isn't close to anything valid
+            const farOffMessages = [
+                [
+                    // Bronze — blunt
+                    `"${input}"? That's not a word, rookie! ❌`,
+                    `Did you just make that up? Not in the dictionary! 🤦`,
+                    `Nope! "${input}" isn't a real word. Try again! 🚫`,
+                ],
+                [
+                    // Silver — condescending
+                    `"${input}"... that's not a word. Disappointing.`,
+                    `The dictionary has never heard of "${input}". Neither have I. 😒`,
+                    `I expected more from you than "${input}". Not a real word.`,
+                ],
+                [
+                    // Gold — dismissive elegance
+                    `"${input}" is not a word. I expected better from this caliber of opponent.`,
+                    `No dictionary in existence contains "${input}". Recalibrate. 📖`,
+                    `A phantom word. "${input}" does not exist. Focus.`,
+                ],
+                [
+                    // Overlord — menacing
+                    `"${input}"? You dare submit that to a Lexical Overlord?! OBLITERATED. 🌑`,
+                    `That is not a word. That is noise. Like you. ❌`,
+                    `"${input}" — a whisper of incompetence. Not found. Not accepted. 👁️`,
+                ]
+            ];
+            const pool = farOffMessages[Math.min(tier, 3)];
+            return pool[Math.floor(Math.random() * pool.length)];
+        }
+    },
+
     submitWord: async function(e) {
         e.preventDefault();
         if(!this.isPlaying) return;
@@ -403,17 +505,16 @@ const shiritoriGame = {
                 inputEl.disabled = false;
                 this._acceptWord(input);
             } else {
-                // 404 = not a valid English word
+                // 404 = not a valid English word — show contextual feedback
                 inputEl.disabled = false;
                 if(typeof sfx !== 'undefined') sfx.playError();
-                const msgs = ["Is that even a real word?", "The dictionary says... nope!", "Nice try, but not in the dictionary!"];
-                const msg = msgs[Math.floor(Math.random() * msgs.length)];
+                const msg = this._getInvalidWordMessage(input);
                 this.setStatus(msg, true);
                 if(typeof fx !== 'undefined') fx.screenShake(5, 200);
                 setTimeout(() => {
                     const statusEl = document.getElementById('sr-status');
                     if(statusEl && statusEl.textContent === msg) this.setStatus('Your turn!', false);
-                }, 3000);
+                }, 3500);
             }
         } catch(err) {
             // API offline or timed out — fall back to local dictionary only
@@ -444,30 +545,37 @@ const shiritoriGame = {
 
         // ── Word Quality Celebrations ──────────────────────────
         const len = input.length;
+        // Directional blast pointing UP towards the arena
+        const angle = -Math.PI / 2;
+        
         if (len >= 11) {
             // LEGENDARY: screen flash + massive banner
             fx.floatingText('LEXICAL DESTROYER! 🌌', cx, cy - 40, '#b34bff', '2.5rem');
             fx.floatingText(`+${wordScore}`, cx, cy, '#f2c94c', '2.2rem');
-            fx.createExplosion(cx, cy, '#b34bff', 60);
+            fx.createDirectionalExplosion(cx, cy, '#b34bff', 60, angle, Math.PI / 1.5);
             fx.screenPulse();
+            fx.screenShake(15, 500);
             if(typeof sfx !== 'undefined') sfx.playCrit();
             if(typeof achievements !== 'undefined') achievements.unlock('logophile');
         } else if (len >= 8) {
             // EPIC: power strike
             fx.floatingText('⚡ Power Strike!', cx, cy - 30, '#ffd700', '1.8rem');
             fx.floatingText(`+${wordScore}`, cx, cy, '#f2c94c', '2rem');
-            fx.createExplosion(cx, cy, '#ffd700', 35);
+            fx.createDirectionalExplosion(cx, cy, '#ffd700', 35, angle, Math.PI / 2);
+            fx.screenShake(10, 300);
             if(typeof sfx !== 'undefined') sfx.playCrit();
         } else if (len >= 5) {
             // NICE: solid hit
             fx.floatingText('Nice Hit!', cx, cy - 25, '#00ff87', '1.4rem');
             fx.floatingText(`+${wordScore}`, cx, cy, '#f2c94c', '2rem');
-            fx.createExplosion(cx, cy, '#00ff87', 20);
+            fx.createDirectionalExplosion(cx, cy, '#00ff87', 20, angle, Math.PI / 2);
+            fx.screenShake(6, 200);
             if(typeof sfx !== 'undefined') sfx.playSuccess();
         } else {
             // BASIC: standard
             fx.floatingText(`+${wordScore}`, cx, cy, '#f2c94c', '2rem');
-            fx.createExplosion(cx, cy, '#00ff87', 10);
+            fx.createDirectionalExplosion(cx, cy, '#00ff87', 10, angle, Math.PI / 2.5);
+            fx.screenShake(3, 100);
             if(typeof sfx !== 'undefined') sfx.playSuccess();
         }
 
@@ -605,38 +713,17 @@ const shiritoriGame = {
 `⚔️ The Word Arcade — Shiritori Royale
 ${result} vs ${tier}
 Score: ${this.score} pts
-${bar}
-Play free at https://the-word-arcade.vercel.app`;
+${bar}`;
 
-        const onCopied = () => {
-            fx.toast('Result copied! Share it! 🔗', 'success');
-        };
-
-        if (navigator.share) {
-            navigator.share({ title: 'The Word Arcade', text })
-                .catch(() => this._clipboardCopy(text, onCopied));
+        if (typeof shareManager !== 'undefined') {
+            shareManager.openModal(text);
         } else {
-            this._clipboardCopy(text, onCopied);
+            // Fallback
+            const full = text + '\nhttps://the-word-arcade.vercel.app';
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(full)
+                    .then(() => fx.toast('Result copied! Share it! 🔗', 'success'));
+            }
         }
-    },
-
-    _clipboardCopy: function(text, onSuccess) {
-        if (navigator.clipboard && window.isSecureContext) {
-            navigator.clipboard.writeText(text).then(onSuccess).catch(() => {
-                this._execCopy(text, onSuccess);
-            });
-        } else {
-            this._execCopy(text, onSuccess);
-        }
-    },
-
-    _execCopy: function(text, onSuccess) {
-        const ta = document.createElement('textarea');
-        ta.value = text;
-        Object.assign(ta.style, { position:'fixed', left:'-9999px', top:'-9999px' });
-        document.body.appendChild(ta);
-        ta.focus(); ta.select();
-        try { document.execCommand('copy'); onSuccess(); } catch(e) {}
-        ta.remove();
     }
 };

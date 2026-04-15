@@ -52,6 +52,51 @@
         </div>
     </div>
 
+    <!-- ── SHARE MODAL ────────────────────────────────────────────── -->
+    <div id="share-modal" class="share-modal-overlay hidden" onclick="if(event.target===this) shareManager.closeModal()">
+        <div class="share-modal-card glass-panel animate-slide-up">
+            <div class="share-modal-header">
+                <span class="share-modal-title">Share Your Result ⚔️</span>
+                <button class="share-close-btn" onclick="shareManager.closeModal()" aria-label="Close">✕</button>
+            </div>
+
+            <!-- Preview of what will be shared -->
+            <div class="share-preview">
+                <pre id="share-preview-text"></pre>
+            </div>
+
+            <!-- Platform Buttons -->
+            <div class="share-platforms">
+                <button id="twitter-btn" class="share-platform-btn share-twitter" onclick="shareManager.shareTwitter()">
+                    <span class="share-icon">𝕏</span>
+                    <span>Twitter / X</span>
+                </button>
+                <button id="whatsapp-btn" class="share-platform-btn share-whatsapp" onclick="shareManager.shareWhatsApp()">
+                    <span class="share-icon">💬</span>
+                    <span>WhatsApp</span>
+                </button>
+                <button id="telegram-btn" class="share-platform-btn share-telegram" onclick="shareManager.shareTelegram()">
+                    <span class="share-icon">✈️</span>
+                    <span>Telegram</span>
+                </button>
+                <button id="facebook-btn" class="share-platform-btn share-facebook" onclick="shareManager.shareFacebook()">
+                    <span class="share-icon">f</span>
+                    <span>Facebook</span>
+                </button>
+            </div>
+
+            <!-- Copy row -->
+            <button id="copy-btn" class="share-copy-btn" onclick="shareManager.copyToClipboard()">
+                📋 Copy to Clipboard
+            </button>
+
+            <!-- Native share on mobile -->
+            <button class="share-native-btn" onclick="shareManager.shareNative()">
+                📤 More Options…
+            </button>
+        </div>
+    </div>
+
     <div id="app">
         <!-- Header -->
         <header class="header" style="margin-bottom:30px; text-align:center; padding-top:10px;">
@@ -61,7 +106,7 @@
         </header>
 
         <!-- Onboarding Screen -->
-        <div id="onboarding" class="glass-panel animate-slide-up" style="max-width: 400px; margin: 20px auto; text-align: center;">
+        <div id="onboarding" class="glass-panel animate-slide-up view-active" style="max-width: 400px; margin: 20px auto; text-align: center;">
             <div style="font-size:3rem; margin-bottom:10px;">🎮</div>
             <h2>Enter the Arcade</h2>
             <p style="color: var(--text-secondary); margin-bottom: 20px;">What should we call you, Challenger?</p>
@@ -169,10 +214,49 @@
                     <div class="status-msg" id="cc-status"></div>
                     <div class="status-msg" id="cc-status-timer" style="color: var(--text-secondary); font-size:0.85rem;"></div>
                 </div>
-                <!-- CC Post-game share -->
+
+                <!-- CC Post-game share (free play) -->
                 <div id="cc-post-game" class="hidden" style="text-align:center; margin-top:15px;">
                     <button class="btn" style="background:#1da1f2;" onclick="compoundChainGame.shareResult()">Share Score 🔗</button>
                     <button class="btn btn-cc" style="margin-left:10px;" onclick="compoundChainGame.init()">New Run →</button>
+                </div>
+
+                <!-- ── DAILY END SCREEN (shown after daily chain complete) ── -->
+                <div id="daily-end" class="daily-end-overlay hidden">
+                    <div class="daily-end-card">
+                        <!-- Firework emoji top -->
+                        <div class="daily-end-firework">🎆</div>
+
+                        <h2 id="daily-end-title" class="daily-end-title">✅ Chain Complete!</h2>
+                        <div id="daily-end-streak" class="daily-end-streak">🔥 1 day streak</div>
+
+                        <div class="daily-end-score-row">
+                            <span class="daily-end-score-label">Your Score</span>
+                            <span id="daily-end-score" class="daily-end-score-value">0</span>
+                            <span class="daily-end-score-label">pts</span>
+                        </div>
+
+                        <!-- Share button -->
+                        <button class="btn daily-end-share-btn" onclick="compoundChainGame.shareDailyResult()">
+                            📤 Share Result
+                        </button>
+
+                        <div class="daily-end-divider">— Play a game —</div>
+
+                        <!-- CTA Buttons -->
+                        <div class="daily-end-cta">
+                            <button class="btn btn-sr daily-end-cta-btn" onclick="app.launchGame('sr')">
+                                ⚔️ Shiritori Royale
+                            </button>
+                            <button class="btn btn-cc daily-end-cta-btn" onclick="app.launchGame('cc')">
+                                🧩 Compound Chain
+                            </button>
+                        </div>
+
+                        <button class="back-btn daily-end-back" onclick="app.showCatalogue()">
+                            ← Return to Arcade
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -262,6 +346,7 @@
     <!-- Scripts -->
     <script src="scripts/audio.js"></script>
     <script src="scripts/effects.js"></script>
+    <script src="scripts/share-manager.js"></script>
     <script src="scripts/multiplayer.js"></script>
     <script src="scripts/achievements.js"></script>
     <script src="scripts/daily.js"></script>

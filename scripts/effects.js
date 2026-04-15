@@ -68,6 +68,25 @@ const fx = {
         }
     },
     
+    createDirectionalExplosion: function(x, y, color, count = 20, targetAngle = 0, spread = Math.PI / 3) {
+        for (let i = 0; i < count; i++) {
+            // Random angle within the spread around the target angle
+            const angle = targetAngle + (Math.random() - 0.5) * spread;
+            const speed = Math.random() * 8 + 4; // Faster initial burst
+            this.particles.push({
+                x: x,
+                y: y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                size: Math.random() * 4 + 2,
+                color: color,
+                life: 1,
+                decay: Math.random() * 0.02 + 0.02, // Dims slightly faster
+                gravity: 0.2 // Slightly heavier gravity for an arc effect
+            });
+        }
+    },
+    
     screenPulse: function() {
         const body = document.body;
         body.style.transform = 'scale(1.02)';

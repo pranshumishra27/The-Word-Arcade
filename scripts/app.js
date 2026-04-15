@@ -139,19 +139,53 @@ const app = {
         }
     },
 
-    // ── View Switching ─────────────────────────────────────────
+    // ── View Switching (with smooth fade) ─────────────────────
     switchView: function(viewId) {
         if(typeof shiritoriGame !== 'undefined') shiritoriGame.stop();
         if(typeof compoundChainGame !== 'undefined') compoundChainGame.stop();
 
-        this.views.forEach(v => {
+        const currentActive = this.views.find(v => {
             const el = document.getElementById(v);
-            if(el) el.classList.toggle('hidden', v !== viewId);
+            return el && el.classList.contains('view-active');
         });
 
-        // Hide footer inside game views, show only in catalogue/onboarding
-        const footer = document.getElementById('credits-footer');
-        if (footer) footer.style.display = (viewId === 'catalogue' || viewId === 'onboarding') ? '' : 'none';
+        // Fade out current, then swap
+        const doSwap = () => {
+            this.views.forEach(v => {
+                const el = document.getElementById(v);
+                if (!el) return;
+                if (v === viewId) {
+                    el.classList.remove('hidden');
+                    // Force reflow so the transition kicks in
+                    void el.offsetWidth;
+                    el.classList.add('view-active');
+                } else {
+                    el.classList.remove('view-active');
+                    // Hide after fade-out completes
+                    setTimeout(() => {
+                        if (!el.classList.contains('view-active')) {
+                            el.classList.add('hidden');
+                        }
+                    }, 350);
+                }
+            });
+
+            // Hide footer inside game views, show only in catalogue/onboarding
+            const footer = document.getElementById('credits-footer');
+            if (footer) footer.style.display = (viewId === 'catalogue' || viewId === 'onboarding') ? '' : 'none';
+        };
+
+        if (currentActive) {
+            const outEl = document.getElementById(currentActive);
+            if (outEl) {
+                outEl.classList.remove('view-active');
+                setTimeout(doSwap, 180); // half the transition duration
+            } else {
+                doSwap();
+            }
+        } else {
+            doSwap();
+        }
     },
 
     // ── Anti-Tamper ────────────────────────────────────────────

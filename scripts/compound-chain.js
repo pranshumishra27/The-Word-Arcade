@@ -17,6 +17,8 @@ const compoundChainGame = {
         if(typeof app !== 'undefined' && app.player.name) {
             document.getElementById('cc-player-name-display').textContent = `Player: ${app.player.name}`;
         }
+        // Hide daily end screen if it was visible
+        this._hideDailyEnd();
         let pool = [...COMPOUND_LEVELS].sort(() => 0.5 - Math.random());
         this.currentRun = pool.slice(0, 10);
         this.loadLevel(0);
@@ -30,6 +32,7 @@ const compoundChainGame = {
         if(typeof app !== 'undefined' && app.player.name) {
             document.getElementById('cc-player-name-display').textContent = `Player: ${app.player.name}`;
         }
+        this._hideDailyEnd();
         if(typeof daily !== 'undefined') {
             const lvl = daily.getDailyLevel();
             this.currentRun = [lvl];
@@ -40,13 +43,19 @@ const compoundChainGame = {
     },
 
     loadLevel: function(index) {
+        // ── Daily mode: chain complete — show the dedicated end screen ──
         if(index >= this.currentRun.length) {
-            document.getElementById('cc-status').textContent = "Run complete! Fantastic linkage!";
-            document.getElementById('cc-status').style.color = "var(--accent-green-light)";
-            document.getElementById('cc-hint').textContent = "Circuit Mastery Achieved!";
-            const postEl = document.getElementById('cc-post-game');
-            if (postEl) postEl.classList.remove('hidden');
-            setTimeout(() => { this.init(); }, 5000);
+            if (this.isDailyMode) {
+                this._showDailyEnd();
+            } else {
+                // Free-play run complete
+                document.getElementById('cc-status').textContent = "Run complete! Fantastic linkage!";
+                document.getElementById('cc-status').style.color = "var(--accent-green-light)";
+                document.getElementById('cc-hint').textContent = "Circuit Mastery Achieved!";
+                const postEl = document.getElementById('cc-post-game');
+                if (postEl) postEl.classList.remove('hidden');
+                setTimeout(() => { this.init(); }, 5000);
+            }
             return;
         }
 
@@ -210,13 +219,94 @@ const compoundChainGame = {
             }
             if(typeof sfx !== 'undefined') sfx.playVictory();
 
-            setTimeout(() => { this.loadLevel(this.currentLevelId + 1); }, 3000);
+            setTimeout(() => { this.loadLevel(this.currentLevelId + 1); }, 2500);
         }
+    },
+
+    // ── Levenshtein distance between two strings ──
+    _levenshtein: function(a, b) {
+        const m = a.length, n = b.length;
+        const dp = Array.from({ length: m + 1 }, (_, i) =>
+            Array.from({ length: n + 1 }, (_, j) => i === 0 ? j : j === 0 ? i : 0)
+        );
+        for (let i = 1; i <= m; i++) {
+            for (let j = 1; j <= n; j++) {
+                dp[i][j] = a[i-1] === b[j-1]
+                    ? dp[i-1][j-1]
+                    : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+            }
+        }
+        return dp[m][n];
+    },
+
+    // Builds a contextual error message based on how close the guess is to the target.
+    _getGuessMessage: function(guess, target) {
+        if (!guess) return "Type something! The chain needs a link! 🔗";
+        const dist = this._levenshtein(guess, target);
+        const diff = target.length - guess.length;
+
+        // ── Near miss: 1–2 edits ──
+        if (dist === 1) {
+            const oneOff = [
+                `One letter off! You're SO close! 🔥`,
+                `Almost! Just one character away! ✨`,
+                `One tiny tweak and you've got it! 💡`,
+                `That close! One letter different from the answer! 🎯`
+            ];
+            return oneOff[Math.floor(Math.random() * oneOff.length)];
+        }
+
+        if (dist === 2) {
+            const twoOff = [
+                `Really close! Just 2 letters away! 💪`,
+                `You're almost there — 2 small changes needed! 🔎`,
+                `So near! Rethink just 2 characters! ⚡`,
+                `That's genuinely close — 2 edits away! Keep going! 🧠`
+            ];
+            return twoOff[Math.floor(Math.random() * twoOff.length)];
+        }
+
+        // ── Warm middle ground: 3–4 edits ──
+        if (dist <= 4) {
+            // Give a directional nudge without revealing the answer
+            if (diff > 1) {
+                const longer = [
+                    `"${guess}" — think longer! The word has ${target.length} letters. 📏`,
+                    `You're on a track — try a ${target.length}-letter word! 🔢`,
+                    `Not quite! Needs ${target.length} letters. Stretch it out! 💭`
+                ];
+                return longer[Math.floor(Math.random() * longer.length)];
+            } else if (diff < -1) {
+                const shorter = [
+                    `"${guess}" is too long! Think of a ${target.length}-letter word. ✂️`,
+                    `You're close in spirit — but trim it to ${target.length} letters! 📏`,
+                    `Shorten it! The answer is ${target.length} letters. 🔢`
+                ];
+                return shorter[Math.floor(Math.random() * shorter.length)];
+            } else {
+                const sameLen = [
+                    `"${guess}" — right length, wrong word! Same ${target.length} letters though! 🤔`,
+                    `Good letter count — but the word is different! Think harder. 🧩`,
+                    `Bzzt! Short circuit — right size, wrong link! ⚡`
+                ];
+                return sameLen[Math.floor(Math.random() * sameLen.length)];
+            }
+        }
+
+        // ── Far off: > 4 edits ──
+        const farOff = [
+            `"${guess}"? That fuse definitely just blew! 💥`,
+            `Not even close! The Arcade says... absolutely not. 😅`,
+            `Wild guess or bold strategy? Either way — nope! 🎲`,
+            `Invalid fusion detected! Try a completely different angle. 🔬`,
+            `The chain short-circuited! "${guess}" doesn't link here at all. ⚡`
+        ];
+        return farOff[Math.floor(Math.random() * farOff.length)];
     },
 
     submitGuess: function(e) {
         e.preventDefault();
-        if(typeof sfx !== 'undefined') sfx.init(); // ensure audio context is running
+        if(typeof sfx !== 'undefined') sfx.init();
         const inputEl = document.getElementById('cc-input');
         const guess = inputEl.value.trim().toLowerCase();
 
@@ -248,55 +338,106 @@ const compoundChainGame = {
             const form = document.getElementById('cc-form');
             form.classList.add('shake');
 
-            const playfulErrors = [
-                "Bzzt! Short circuit! Try again.",
-                "That word doesn't quite link up...",
-                "Invalid fusion detected!",
-                "Nope, that fuse just blew!",
-                "The Arcade says... Nah.",
-                "Spelling glitch? Or just a wild guess?",
-                "Not the right spark!"
-            ];
-            const randomError = playfulErrors[Math.floor(Math.random() * playfulErrors.length)];
+            // Dynamic message based on how close the guess is to the target
+            const errorMsg = this._getGuessMessage(guess, targetWord);
 
-            document.getElementById('cc-status').textContent = randomError;
+            document.getElementById('cc-status').textContent = errorMsg;
             document.getElementById('cc-status').style.color = "var(--accent-red-light)";
             if(typeof fx !== 'undefined') fx.screenShake(5, 200);
             setTimeout(() => form.classList.remove('shake'), 400);
 
             setTimeout(() => {
-                if(document.getElementById('cc-status').textContent === randomError) {
+                if(document.getElementById('cc-status').textContent === errorMsg) {
                     document.getElementById('cc-status').textContent = "";
                 }
-            }, 3000);
+            }, 3500);
         }
     },
 
+    // ── Daily End Screen ───────────────────────────────────────────────
+
+    _showDailyEnd: function() {
+        const streak = typeof daily !== 'undefined' ? daily.getStreak() : 0;
+        const isNewHigh = this.score > (app.player.ccHighScore - 50); // approximate
+
+        // Populate end screen fields
+        const scoreEl = document.getElementById('daily-end-score');
+        if (scoreEl) scoreEl.textContent = this.score;
+
+        const streakEl = document.getElementById('daily-end-streak');
+        if (streakEl) streakEl.textContent = `🔥 ${streak} day streak`;
+
+        const titleEl  = document.getElementById('daily-end-title');
+        if (titleEl) titleEl.textContent = isNewHigh ? '🏆 New Record!' : '✅ Chain Complete!';
+
+        // Show end panel, hide form
+        const formEl = document.getElementById('cc-form');
+        if (formEl) formEl.classList.add('hidden');
+
+        const hintBtn = document.getElementById('cc-buy-hint');
+        if (hintBtn) hintBtn.classList.add('hidden');
+
+        const endEl = document.getElementById('daily-end');
+        if (endEl) {
+            endEl.classList.remove('hidden');
+            void endEl.offsetWidth;
+            endEl.classList.add('daily-end-visible');
+        }
+
+        // Fireworks!
+        if (typeof fx !== 'undefined') {
+            fx.createExplosion(window.innerWidth / 2, window.innerHeight / 3, '#ffd700', 80);
+            fx.screenPulse();
+            setTimeout(() => fx.createExplosion(window.innerWidth / 3, window.innerHeight / 2, '#60efff', 50), 400);
+            setTimeout(() => fx.createExplosion(window.innerWidth * 2/3, window.innerHeight / 2, '#b34bff', 50), 700);
+        }
+        if (typeof sfx !== 'undefined') sfx.playVictory();
+    },
+
+    _hideDailyEnd: function() {
+        const endEl = document.getElementById('daily-end');
+        if (endEl) {
+            endEl.classList.remove('daily-end-visible');
+            endEl.classList.add('hidden');
+        }
+        const formEl = document.getElementById('cc-form');
+        if (formEl) formEl.classList.remove('hidden');
+        const hintBtn = document.getElementById('cc-buy-hint');
+        if (hintBtn) hintBtn.classList.remove('hidden');
+    },
+
+    shareDailyResult: function() {
+        const streak = typeof daily !== 'undefined' ? daily.getStreak() : 0;
+        const level  = typeof daily !== 'undefined' ? daily.getDailyLevel() : null;
+        const chain  = level ? level.chain.map(w => w.toUpperCase()).join(' → ') : '';
+        const bars   = ['🟩','🟩','🟩','🟩'].join('');
+
+        const text =
+`🔥 The Word Arcade — Daily Challenge
+${bars} ${this.score} pts  |  🔥 ${streak} day streak
+Chain: ${chain}`;
+
+        if (typeof shareManager !== 'undefined') {
+            shareManager.openModal(text);
+        }
+    },
+
+    // ── Free-play share (existing) ─────────────────────────────────────
     shareResult: function() {
         const text =
 `🧩 The Word Arcade — Compound Chain
 Score: ${this.score} pts across ${this.currentLevelId} levels
-${'🟩'.repeat(Math.min(this.currentLevelId,5))}${'⬛'.repeat(Math.max(0,5-this.currentLevelId))}
-Play free at https://the-word-arcade.vercel.app`;
+${'🟩'.repeat(Math.min(this.currentLevelId, 5))}${'⬛'.repeat(Math.max(0, 5 - this.currentLevelId))}`;
 
-        const onCopied = () => fx.toast('Score copied! Share it! 🔗', 'success');
-
-        if (navigator.share) {
-            navigator.share({ title: 'The Word Arcade', text }).catch(() => {
-                if (navigator.clipboard && window.isSecureContext) {
-                    navigator.clipboard.writeText(text).then(onCopied);
-                }
-            });
-        } else if (navigator.clipboard && window.isSecureContext) {
-            navigator.clipboard.writeText(text).then(onCopied);
+        if (typeof shareManager !== 'undefined') {
+            shareManager.openModal(text);
         } else {
-            const ta = document.createElement('textarea');
-            ta.value = text;
-            Object.assign(ta.style, { position:'fixed', left:'-9999px' });
-            document.body.appendChild(ta);
-            ta.focus(); ta.select();
-            try { document.execCommand('copy'); onCopied(); } catch(e) {}
-            ta.remove();
+            // Fallback if shareManager somehow not loaded
+            const full = text + '\nhttps://the-word-arcade.vercel.app';
+            const onCopied = () => fx.toast('Score copied! Share it! 🔗', 'success');
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(full).then(onCopied);
+            }
         }
     }
 };
