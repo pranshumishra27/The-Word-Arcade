@@ -144,6 +144,8 @@ const shiritoriGame = {
     stop: function() {
         this.isPlaying = false;
         clearInterval(this.timer);
+        clearInterval(this._waitingInterval);
+        this._waitingInterval = null;
         document.body.classList.remove('fever-mode');
         // Reset session-scoped used words only when player exits to Arcade
         this.usedWords = new Set();
@@ -220,6 +222,58 @@ const shiritoriGame = {
         document.getElementById('sr-start-letter').textContent = this.currentLetter;
         document.getElementById('sr-input').value = '';
         document.getElementById('sr-input').focus();
+    },
+
+    // Called when it's the enemy's turn — hides the required letter so player
+    // can't see what the AI is 'thinking', and shows a waiting animation.
+    setWaitingState: function() {
+        const startLetter = document.getElementById('sr-start-letter');
+        const inputEl     = document.getElementById('sr-input');
+        const submitBtn   = document.querySelector('#sr-form button[type="submit"]');
+
+        startLetter.textContent = '…';
+        startLetter.style.color = 'var(--text-secondary)';
+        startLetter.style.opacity = '0.5';
+        startLetter.classList.add('waiting');
+
+        inputEl.value = '';
+        inputEl.disabled = true;
+        inputEl.placeholder = '⏳ Waiting for opponent…';
+        inputEl.style.color = 'var(--text-secondary)';
+        inputEl.style.fontStyle = 'italic';
+
+        if (submitBtn) submitBtn.disabled = true;
+
+        // Animated dots in the placeholder
+        let dots = 0;
+        this._waitingInterval = setInterval(() => {
+            dots = (dots + 1) % 4;
+            inputEl.placeholder = '⏳ Opponent is thinking' + '.'.repeat(dots);
+        }, 400);
+    },
+
+    // Restores the player-turn UI state after the enemy has played.
+    setPlayerTurnState: function() {
+        clearInterval(this._waitingInterval);
+        this._waitingInterval = null;
+
+        const startLetter = document.getElementById('sr-start-letter');
+        const inputEl     = document.getElementById('sr-input');
+        const submitBtn   = document.querySelector('#sr-form button[type="submit"]');
+
+        startLetter.textContent = this.currentLetter;
+        startLetter.style.color = '';
+        startLetter.style.opacity = '';
+        startLetter.classList.remove('waiting');
+
+        inputEl.disabled = false;
+        inputEl.placeholder = 'Enter your word…';
+        inputEl.style.color = '';
+        inputEl.style.fontStyle = '';
+        inputEl.value = '';
+        inputEl.focus();
+
+        if (submitBtn) submitBtn.disabled = false;
     },
 
     addHistory: function(word, type) {
@@ -441,15 +495,18 @@ const shiritoriGame = {
             return;
         }
 
-        this.updateUI();
+        // Switch to waiting state BEFORE enemy turn — do NOT call updateUI()
+        // here so the player never sees the letter the AI is 'thinking' about.
+        this.setWaitingState();
         this.enemyTurn();
     },
 
 
     enemyTurn: function() {
-        this.isPlaying = false; 
-        document.getElementById('sr-input').disabled = true;
-        this.setStatus('Enemy is thinking...', false);
+        this.isPlaying = false;
+        // setWaitingState() already called by _acceptWord — input is already
+        // disabled and showing the animated placeholder.
+        this.setStatus('Opponent is thinking…', false);
         
         const tier = AI_TIERS[this.currentTier];
         
@@ -467,6 +524,7 @@ const shiritoriGame = {
             if(possibleWords.length === 0) {
                 this.enemyHp = 0;
                 this.updateHealth();
+                clearInterval(this._waitingInterval);
                 this.setStatus('Enemy has no words left!', false);
                 this.endGame();
                 return;
@@ -481,6 +539,7 @@ const shiritoriGame = {
             this.currentLetter = aiWord.slice(-1).toUpperCase();
             
             if(this.playerHp <= 0) {
+                clearInterval(this._waitingInterval);
                 this.endGame();
                 return;
             }
@@ -488,8 +547,9 @@ const shiritoriGame = {
             this.isPlaying = true;
             this.timeLeft = 100;
             this.lastWordTime = performance.now();
-            document.getElementById('sr-input').disabled = false;
-            this.updateUI();
+
+            // Restore player UI — now safe to reveal the required letter
+            this.setPlayerTurnState();
             this.setStatus('Your turn!', false);
             
         }, tier.speed + Math.random() * 500);
@@ -498,6 +558,8 @@ const shiritoriGame = {
     endGame: function() {
         this.isPlaying = false;
         clearInterval(this.timer);
+        clearInterval(this._waitingInterval);
+        this._waitingInterval = null;
         document.body.classList.remove('fever-mode');
         document.getElementById('sr-form').classList.add('hidden');
         document.getElementById('sr-post-game').classList.remove('hidden');

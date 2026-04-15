@@ -595,9 +595,32 @@ input[type="text"]:focus {
 }
 
 .grouped-input { display: flex; align-items: stretch; flex: 1; }
-.start-letter { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); border-right: none; border-radius: 12px 0 0 12px; padding: 0 20px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.5rem; color: var(--accent-red-light); text-transform: uppercase; }
+.start-letter { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); border-right: none; border-radius: 12px 0 0 12px; padding: 0 20px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.5rem; color: var(--accent-red-light); text-transform: uppercase; transition: color 0.3s, opacity 0.3s; }
 .grouped-input input { border-radius: 0 12px 12px 0; border: 1px solid rgba(255,255,255,0.1); }
 .grouped-input input:focus { border-color: rgba(255,255,255,0.3); }
+
+/* Input waiting state (enemy turn) */
+.grouped-input input:disabled {
+    cursor: not-allowed;
+    background: rgba(0,0,0,0.2);
+    opacity: 0.7;
+}
+
+#sr-form button[type="submit"]:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none !important;
+    filter: none !important;
+}
+
+/* Pulsing waiting indicator on the start-letter badge */
+@keyframes waitPulse {
+    0%, 100% { opacity: 0.5; }
+    50%       { opacity: 0.2; }
+}
+.start-letter.waiting {
+    animation: waitPulse 0.8s ease-in-out infinite;
+}
 
 /* --- RESPONSIVE DESIGN SYSTEM --- */
 
