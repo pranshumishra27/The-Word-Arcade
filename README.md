@@ -17,14 +17,17 @@
 ### 🧩 Compound Chain
 A cerebral puzzle mode where players link compound word sequences from start to finish within a bonus timer.
 
-- **Rogue-lite Runs** — The master pool of 30 levels is shuffled every run. No two play-throughs are the same sequence.
+- **Progressive Difficulty** — The master pool of 30 levels is mapped to a logical difficulty curve, guiding players from simple links to cerebral jumps.
 - **Bonus Timer Engine** — Answer faster to earn higher point multipliers.
-- **Daily Challenge** — A globally seeded puzzle drops every day (same for all players worldwide). Complete it to build your streak.
+- **Hardcore Daily Challenge** — A globally seeded puzzle drops every day. Hints are disabled for pure competition, and the full word sequence is revealed exclusively upon victory to build your streak.
 
 ### ⚔️ Shiritori Royale
 A high-intensity word combat arena. Chain words by their final letter and deal damage to AI opponents.
 
 - **4 AI Tiers** — Bronze Grunt → Silver Adept → Gold Master → Lexical Overlord, each with unique personality, trash talk, and escalating difficulty.
+- **Modern Immersive UI/UX** — Next-generation aesthetics with fluid micro-animations, haptic-like visual feedback, and responsive glassmorphism.
+- **Context-Aware Feedback** — Sophisticated real-time analysis distinguishes between "close" misspellings and "far-off" invalid words, providing dynamic motivational coaching.
+- **Viral Social Sharing** — Seamlessly integrated share cards with strategic celebration triggers for key milestones and high scores.
 - **Word Quality Rewards** — 5+ letters = "Nice Hit!" · 8+ = "⚡ Power Strike!" · 11+ = "LEXICAL DESTROYER! 🌌" with screen flash effects.
 - **Fever Mode** — Sustain fast combos to trigger full visual and audio overdrive.
 - **Session Word Memory** — Words used across all tiers within a session are permanently blocked, forcing vocabulary breadth.
@@ -43,7 +46,7 @@ A high-intensity word combat arena. Chain words by their final letter and deal d
 | 🌐 **Live Vocab** | Words validated against real dictionary API — any legitimate English word works |
 | 🚫 **Profanity Guard** | Built-in filter blocks abusive input before it hits the dictionary API |
 | 🔒 **Anti-Tamper** | DOM integrity monitor protects credits and authorship |
-| 🎵 **Audio Synthesis** | Real-time 8-bit SFX via Web Audio API — no external audio files |
+| 🎵 **Audio Synthesis** | Real-time SFX via Web Audio API, featuring dynamic auditory feedback for correct entries and errors |
 
 ---
 
