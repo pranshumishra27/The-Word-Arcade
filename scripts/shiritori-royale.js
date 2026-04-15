@@ -706,14 +706,47 @@ const shiritoriGame = {
 
     shareResult: function() {
         const won    = this.playerHp > 0;
-        const tier   = AI_TIERS[this.currentTier].name;
-        const result = won ? 'VICTORY ⚔️' : 'DEFEAT 💀';
-        const bar    = ['🟩','🟩','🟨','🟥','🟩'].sort(() => 0.5 - Math.random()).join('');
-        const text   =
-`⚔️ The Word Arcade — Shiritori Royale
-${result} vs ${tier}
-Score: ${this.score} pts
-${bar}`;
+        const tier   = AI_TIERS[this.currentTier];
+        const score  = this.score;
+        const isNewHigh = score >= (app && app.player.srHighScore || 0);
+
+        // ── Tier-flavoured openers ──
+        const victoryOpeners = [
+            `I just demolished ${tier.name} in The Word Arcade. 💪`,
+            `${tier.name} tried. I spelled them into the ground. ⚡`,
+            `Defeated ${tier.name} with vocabulary alone. 🧠`,
+            `The AI didn't stand a chance. ${tier.name} = eliminated. 💥`
+        ];
+        const defeatOpeners = [
+            `${tier.name} absolutely destroyed my vocabulary. 💀`,
+            `I was one word away... and I choked. 😬`,
+            `${tier.name} has humbled me. I will return. 🔥`,
+            `Lost to a machine. Time to hit the dictionary. 📖`
+        ];
+        const openers = won ? victoryOpeners : defeatOpeners;
+        const opener  = openers[Math.floor(Math.random() * openers.length)];
+
+        // ── Emoji health bar (approximate) ──
+        const health = Math.round((this.playerHp / this.maxPlayerHp) * 5);
+        const hpBar  = '🟩'.repeat(health) + '🟥'.repeat(5 - health);
+
+        // ── Dynamic hook ──
+        const hooks = [
+            "Think you can survive longer? 👀",
+            "Free to play. Free to humiliate. Prove yourself.",
+            "Can your brain outspell an AI? Find out.",
+            "No download. No sign-up. Just words and warfare."
+        ];
+        const hook = hooks[Math.floor(Math.random() * hooks.length)];
+
+        const newHighLine = isNewHigh ? '\n🏆 New Personal Best!' : '';
+
+        const text =
+`⚔️ Word Arcade — Shiritori Royale
+${hpBar}  ${score} pts${newHighLine}
+${opener}
+
+${hook}`;
 
         if (typeof shareManager !== 'undefined') {
             shareManager.openModal(text);
