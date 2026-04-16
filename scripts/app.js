@@ -1,3 +1,37 @@
+let deferredPrompt;
+
+// ── PWA Install Logic ────────────────────────────────────────────────────────
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Prevent the mini-infobar from appearing on mobile
+    e.preventDefault();
+    deferredPrompt = e;
+    
+    // Show our custom Install button
+    const installBtn = document.getElementById('pwa-install-btn');
+    if (installBtn) {
+        installBtn.classList.remove('hidden');
+        installBtn.onclick = async () => {
+            if (!deferredPrompt) return;
+            // Show the install prompt
+            deferredPrompt.prompt();
+            // Wait for user choice
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                installBtn.classList.add('hidden');
+            }
+            deferredPrompt = null;
+        };
+    }
+});
+
+window.addEventListener('appinstalled', () => {
+    // Hide the button and clear the prompt when successfully installed
+    const installBtn = document.getElementById('pwa-install-btn');
+    if (installBtn) installBtn.classList.add('hidden');
+    deferredPrompt = null;
+    if (typeof fx !== 'undefined') fx.toast('App installed successfully! 🚀', 'success');
+});
+
 const app = {
     views: ['catalogue', 'game-cc', 'game-sr', 'onboarding'],
     player: {
