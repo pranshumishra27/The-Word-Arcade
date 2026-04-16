@@ -3,7 +3,7 @@
 // Enables offline play and PWA install prompt on Chrome/Safari
 // ═══════════════════════════════════════════════════════════
 
-const CACHE_NAME = 'word-arcade-v1';
+const CACHE_NAME = 'word-arcade-v2';
 
 // All static assets to pre-cache on install
 const PRECACHE_URLS = [
@@ -11,8 +11,9 @@ const PRECACHE_URLS = [
     '/index.html',
     '/styles.css',
     '/manifest.json',
-    '/icons/icon-192.jpg',
-    '/icons/icon-512.jpg',
+    '/icons/icon-192.png',
+    '/icons/icon-512.png',
+
 
 
     // Scripts
