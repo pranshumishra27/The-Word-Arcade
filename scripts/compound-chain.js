@@ -369,7 +369,7 @@ const compoundChainGame = {
         return farOff[Math.floor(Math.random() * farOff.length)];
     },
 
-    submitGuess: function(e) {
+    submitGuess: async function(e) {
         e.preventDefault();
         if(typeof sfx !== 'undefined') sfx.init();
         const inputEl = document.getElementById('cc-input');
@@ -399,6 +399,80 @@ const compoundChainGame = {
             this.timeLeft = this.maxTime;
             this.renderViewer();
         } else {
+            // ── MANDATORY LEXICAL VALIDATION ──
+            const currentWord = this.levelData.chain[this.currentWordIndex].toLowerCase();
+            
+            // Pause timer during async checks
+            this.isPlaying = false;
+            
+            // 1. STANDALONE VALIDITY
+            let isStandalone = false;
+            if (typeof DICTIONARY !== 'undefined' && DICTIONARY.includes(guess)) isStandalone = true;
+            else if (typeof EXTRA_WORDS !== 'undefined' && EXTRA_WORDS.includes(guess)) isStandalone = true;
+            
+            const originalStatus = document.getElementById('cc-status').textContent;
+            
+            if (!isStandalone) {
+                inputEl.disabled = true;
+                document.getElementById('cc-status').textContent = 'Validating word...';
+                try {
+                    const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${guess}`, { signal: AbortSignal.timeout(3000) });
+                    if (res.ok) isStandalone = true;
+                } catch (err) {
+                    // API failure fallback
+                }
+                inputEl.disabled = false;
+                inputEl.focus();
+            }
+
+            if (!isStandalone) {
+                this.isPlaying = true; // Resume timer
+                if(typeof sfx !== 'undefined') sfx.playError();
+                const form = document.getElementById('cc-form');
+                form.classList.add('shake');
+                document.getElementById('cc-status').textContent = "Not a recognized dictionary word! ❌";
+                document.getElementById('cc-status').style.color = "var(--accent-red-light)";
+                setTimeout(() => form.classList.remove('shake'), 400);
+                setTimeout(() => {
+                    const currentTxt = document.getElementById('cc-status').textContent;
+                    if(currentTxt.includes('recognized')) document.getElementById('cc-status').textContent = "";
+                }, 3000);
+                return;
+            }
+
+            // 2. COMPOUND INTEGRITY & 3. SEMANTIC DRIFT PREVENTION
+            const compoundWord = currentWord + guess;
+            let isCompound = false;
+            
+            inputEl.disabled = true;
+            document.getElementById('cc-status').textContent = 'Checking compound...';
+            try {
+                const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${compoundWord}`, { signal: AbortSignal.timeout(3000) });
+                if (res.ok) isCompound = true;
+            } catch (err) {
+                // API failure fallback
+            }
+            inputEl.disabled = false;
+            inputEl.focus();
+
+            if (isCompound) {
+                this.isPlaying = true; // Resume timer
+                if(typeof sfx !== 'undefined') sfx.playError();
+                const form = document.getElementById('cc-form');
+                form.classList.add('shake');
+                document.getElementById('cc-status').textContent = "That fits the chain, but doesn't match the hint! Try again.";
+                document.getElementById('cc-status').style.color = "#f2c94c";
+                setTimeout(() => form.classList.remove('shake'), 400);
+                setTimeout(() => {
+                    const currentTxt = document.getElementById('cc-status').textContent;
+                    if(currentTxt.includes('fits the chain')) document.getElementById('cc-status').textContent = "";
+                }, 3500);
+                return;
+            }
+
+            // If it's a standalone word but not a valid compound that forms the right answer or alternate hint,
+            // fall through to standard distance / far off errors.
+            this.isPlaying = true; // Resume timer
             if(typeof sfx !== 'undefined') sfx.playError();
             const form = document.getElementById('cc-form');
             form.classList.add('shake');
