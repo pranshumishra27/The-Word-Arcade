@@ -150,6 +150,42 @@ const shiritoriGame = {
         document.body.classList.remove('fever-mode');
         // Reset session-scoped used words only when player exits to Arcade
         this.usedWords = new Set();
+        
+        // Hide quit overlay if present
+        const qo = document.getElementById('sr-quit-overlay');
+        if (qo) { qo.classList.remove('sr-quit-visible'); qo.classList.add('hidden'); }
+    },
+
+    // ── Quit Management ───────────────────────────────────────────────────
+    confirmQuit: function() {
+        // If not in an active battle, exit directly
+        if (!this.isPlaying && (this.playerHp <= 0 || this.enemyHp <= 0)) {
+            app.showCatalogue();
+            return;
+        }
+
+        this.isPlaying = false; // Pause the timer while the dialog is open
+        clearInterval(this.timer);
+
+        const overlay = document.getElementById('sr-quit-overlay');
+        if (overlay) {
+            overlay.classList.remove('hidden');
+            void overlay.offsetWidth; // force reflow for animation
+            overlay.classList.add('sr-quit-visible');
+        }
+    },
+
+    _dismissQuit: function() {
+        const overlay = document.getElementById('sr-quit-overlay');
+        if (overlay) {
+            overlay.classList.remove('sr-quit-visible');
+            setTimeout(() => overlay.classList.add('hidden'), 250);
+        }
+        // Resume only if the player and enemy are still alive
+        if (this.playerHp > 0 && this.enemyHp > 0 && this.currentLetter) {
+            this.isPlaying = true;
+            this.startTimer();
+        }
     },
 
     startTimer: function() {

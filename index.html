@@ -6,13 +6,33 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Word Arcade">
     <meta name="theme-color" content="#0a0b10">
     <meta name="description" content="The Word Arcade — two elite word games in one. Play Compound Chain and Shiritori Royale. Battle AI overlords, earn achievements, and conquer the Daily Challenge.">
     <meta property="og:title" content="The Word Arcade">
     <meta property="og:description" content="Battle AI opponents in Shiritori Royale and solve compound word chains. Free, daily challenges, no download needed.">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <!-- Apple Touch Icon (iOS home screen) -->
+    <link rel="apple-touch-icon" href="/icons/icon-192.jpg">
+    <!-- Favicon -->
+    <link rel="icon" type="image/jpeg" sizes="192x192" href="/icons/icon-192.jpg">
+
     <title>The Word Arcade — Compound Chain &amp; Shiritori Royale</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('[SW] Registered:', reg.scope))
+                    .catch(err => console.warn('[SW] Registration failed:', err));
+            });
+        }
+    </script>
 </head>
 <body>
 
@@ -230,6 +250,20 @@
                     </div>
                 </div>
 
+                <!-- ── RESUME OVERLAY (shown when re-entering with an interrupted run) ── -->
+                <div id="cc-resume-overlay" class="cc-quit-overlay hidden">
+                    <div class="cc-quit-card glass-panel">
+                        <div style="font-size:2rem; margin-bottom:8px;">🔄</div>
+                        <h3 style="margin:0 0 6px 0; font-family:'Outfit',sans-serif;">Resume your run?</h3>
+                        <p style="color:var(--text-secondary); font-size:0.9rem; margin:0 0 16px 0;">You were at <strong id="cc-resume-score" style="color:var(--accent-green-light);">0</strong> pts &mdash; Level <strong id="cc-resume-level">1</strong>/10</p>
+                        <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+                            <button class="btn btn-cc" onclick="compoundChainGame._resumeRun()">▶ Resume Run</button>
+                            <button class="btn btn-sr" onclick="compoundChainGame._startFresh(); app.launchGame('sr');">⚔️ Shiritori Royale</button>
+                            <button class="btn" style="background:rgba(255,255,255,0.1); width:100%; margin-top:4px;" onclick="compoundChainGame._startFresh()">🆕 New Run</button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- ── END SCREEN (shown after chain complete) ── -->
                 <div id="daily-end" class="daily-end-overlay hidden">
                     <div class="daily-end-card">
@@ -270,7 +304,7 @@
 
         <!-- ── SHIRITORI ROYALE INTERFACE ────────────────────── -->
         <div id="game-sr" class="glass-panel hidden animate-slide-up">
-            <button class="back-btn" onclick="app.showCatalogue()">← Return to Arcade</button>
+            <button class="back-btn" onclick="shiritoriGame.confirmQuit()">← Return to Arcade</button>
             <div class="sr-container">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <h2 class="title-sr" style="font-size:2rem; margin: 0;">Shiritori Royale</h2>
@@ -325,6 +359,20 @@
                     <button type="submit" class="btn btn-sr">Attack ⚔️</button>
                 </form>
                 
+                <!-- ── SHIRITORI QUIT OVERLAY ── -->
+                <div id="sr-quit-overlay" class="cc-quit-overlay hidden">
+                    <div class="cc-quit-card glass-panel" style="border: 2px solid var(--accent-red);">
+                        <div style="font-size:2rem; margin-bottom:8px;">⚔️</div>
+                        <h3 style="margin:0 0 6px 0; font-family:'Outfit',sans-serif;">Abandon this battle?</h3>
+                        <p style="color:var(--text-secondary); font-size:0.9rem; margin:0 0 16px 0;">Your tier unlocks are saved. This boss escapes... for now.</p>
+                        <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+                            <button class="btn btn-cc" onclick="app.showCatalogue(); app.launchGame('cc');">🧩 Compound Chain</button>
+                            <button class="btn btn-sr" onclick="app.showCatalogue()">🏠 Arcade</button>
+                            <button class="btn" style="background:rgba(255,255,255,0.1); width:100%; margin-top:4px;" onclick="shiritoriGame._dismissQuit()">↩ Keep Fighting</button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- ── SHIRITORI END SCREEN ── -->
                 <div id="sr-end" class="daily-end-overlay hidden">
                     <div class="daily-end-card">

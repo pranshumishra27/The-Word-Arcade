@@ -27,6 +27,21 @@ const compoundChainGame = {
     },
 
     init: function() {
+        // ── If a run was interrupted mid-way, offer to resume ────────────
+        if (this.interruptedRun && this.interruptedRun.score > 0) {
+            const scoreEl = document.getElementById('cc-resume-score');
+            const levelEl = document.getElementById('cc-resume-level');
+            if (scoreEl) scoreEl.textContent = this.interruptedRun.score;
+            if (levelEl) levelEl.textContent = this.interruptedRun.currentLevelId + 1;
+            const overlay = document.getElementById('cc-resume-overlay');
+            if (overlay) {
+                overlay.classList.remove('hidden');
+                void overlay.offsetWidth;
+                overlay.classList.add('cc-quit-visible');
+            }
+            return; // Wait for player to choose Resume or New Run
+        }
+
         this.score = 0;
         this.chainMultiplier = 1.0;
         this.hintUsed = false;
@@ -36,7 +51,6 @@ const compoundChainGame = {
         if(typeof app !== 'undefined' && app.player.name) {
             document.getElementById('cc-player-name-display').textContent = `Player: ${app.player.name}`;
         }
-        // Hide daily end screen if it was visible
         this._hideEndScreen();
         this.currentRun = this._buildTieredRun();
         this.loadLevel(0);
@@ -113,6 +127,9 @@ const compoundChainGame = {
     stop: function() {
         this.isPlaying = false;
         clearInterval(this.timer);
+        // Always clear the quit overlay so it doesn't ghost on re-entry
+        const qo = document.getElementById('cc-quit-overlay');
+        if (qo) { qo.classList.remove('cc-quit-visible'); qo.classList.add('hidden'); }
     },
 
     // ── Quit Management ───────────────────────────────────────────────────
@@ -153,12 +170,26 @@ const compoundChainGame = {
         }
     },
 
-    // Saves score if it's a new high, opens share modal automatically, then exits
+    // Saves the interrupted run state so the player can resume later
     _saveAndQuit: function() {
+        // Snapshot current run state for resume on re-entry
+        if (this.score > 0 && this.currentRun && this.currentLevelId < this.currentRun.length) {
+            this.interruptedRun = {
+                score:          this.score,
+                currentLevelId: this.currentLevelId,
+                currentWordIndex: this.currentWordIndex,
+                currentRun:     this.currentRun,
+                levelData:      this.levelData,
+                perfectRun:     this.perfectRun,
+                hintUsed:       this.hintUsed,
+                isDailyMode:    this.isDailyMode,
+                chainMultiplier: this.chainMultiplier
+            };
+        }
+        // Save high score + auto-share if new record
         if (this.score > 0 && this.score > (app.player.ccHighScore || 0)) {
             app.player.ccHighScore = this.score;
             app.saveProfile();
-            // Auto-open share modal on new record — no extra button needed
             if (typeof shareManager !== 'undefined') {
                 this.shareResult();
             } else {
@@ -166,6 +197,62 @@ const compoundChainGame = {
             }
         }
         app.showCatalogue();
+    },
+
+    // Resumes from the saved interrupted run state
+    _resumeRun: function() {
+        const s = this.interruptedRun;
+        if (!s) { this.init(); return; }
+
+        this.score           = s.score;
+        this.currentLevelId  = s.currentLevelId;
+        this.currentWordIndex = s.currentWordIndex;
+        this.currentRun      = s.currentRun;
+        this.levelData       = s.levelData;
+        this.perfectRun      = s.perfectRun;
+        this.hintUsed        = s.hintUsed;
+        this.isDailyMode     = s.isDailyMode;
+        this.chainMultiplier = s.chainMultiplier;
+        this.interruptedRun  = null;
+        this.isPlaying       = true;
+
+        // Dismiss resume overlay
+        const overlay = document.getElementById('cc-resume-overlay');
+        if (overlay) {
+            overlay.classList.remove('cc-quit-visible');
+            setTimeout(() => overlay.classList.add('hidden'), 250);
+        }
+
+        document.getElementById('cc-score').textContent = this.score;
+        if (typeof app !== 'undefined' && app.player.name) {
+            document.getElementById('cc-player-name-display').textContent = `Player: ${app.player.name}`;
+        }
+        this._hideEndScreen();
+        this.renderViewer();
+        this.startTimer();
+    },
+
+    // Discards interrupted state and starts a clean new run
+    _startFresh: function() {
+        this.interruptedRun = null;
+        const overlay = document.getElementById('cc-resume-overlay');
+        if (overlay) {
+            overlay.classList.remove('cc-quit-visible');
+            overlay.classList.add('hidden');
+        }
+        // Re-run init without an interrupted state
+        this.score = 0;
+        this.chainMultiplier = 1.0;
+        this.hintUsed = false;
+        this.perfectRun = true;
+        this.isDailyMode = false;
+        document.getElementById('cc-score').textContent = '0';
+        if (typeof app !== 'undefined' && app.player.name) {
+            document.getElementById('cc-player-name-display').textContent = `Player: ${app.player.name}`;
+        }
+        this._hideEndScreen();
+        this.currentRun = this._buildTieredRun();
+        this.loadLevel(0);
     },
 
     startTimer: function() {

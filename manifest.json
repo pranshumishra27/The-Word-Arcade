@@ -1,0 +1,44 @@
+{
+    "name": "The Word Arcade",
+    "short_name": "Word Arcade",
+    "description": "Two elite word games: Compound Chain and Shiritori Royale. Daily challenges, zero mercy.",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "portrait-primary",
+    "background_color": "#080910",
+    "theme_color": "#0a0b10",
+    "categories": ["games", "education", "entertainment"],
+    "lang": "en",
+    "icons": [
+        {
+            "src": "/icons/icon-192.jpg",
+            "sizes": "192x192",
+            "type": "image/jpeg",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/icons/icon-512.jpg",
+            "sizes": "512x512",
+            "type": "image/jpeg",
+            "purpose": "any maskable"
+        }
+    ],
+    "screenshots": [],
+    "shortcuts": [
+        {
+            "name": "Daily Challenge",
+            "short_name": "Daily",
+            "description": "Jump straight into today's Daily Compound Challenge",
+            "url": "/?launch=daily",
+            "icons": [{ "src": "/icons/icon-192.jpg", "sizes": "192x192", "type": "image/jpeg" }]
+        },
+        {
+            "name": "Shiritori Royale",
+            "short_name": "Shiritori",
+            "description": "Battle AI opponents in Shiritori Royale",
+            "url": "/?launch=sr",
+            "icons": [{ "src": "/icons/icon-192.jpg", "sizes": "192x192", "type": "image/jpeg" }]
+        }
+    ]
+}
