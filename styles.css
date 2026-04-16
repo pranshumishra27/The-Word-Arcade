@@ -1021,3 +1021,117 @@ input[type="text"]:focus {
     .vs-text { margin: 0; }
 }
 
+
+/* -- Compound Chain Quit Confirm Overlay ------------------------------- */
+.cc-quit-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(8, 9, 16, 0.75);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border-radius: var(--radius-lg);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+.cc-quit-overlay.cc-quit-visible {
+    opacity: 1;
+    pointer-events: all;
+}
+.cc-quit-card {
+    text-align: center;
+    padding: 32px 28px;
+    max-width: 340px;
+    width: 90%;
+    border: 1px solid rgba(124, 92, 191, 0.35);
+    box-shadow: 0 0 40px rgba(124, 92, 191, 0.15);
+    animation: none;
+}
+
+/* Ensure the quit overlay anchors correctly inside the game panel */
+#game-cc { position: relative; }
+
+/* ── Universal Share Modal ───────────────────────────────────────────── */
+.share-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(8, 9, 16, 0.82);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+.share-modal-backdrop.share-modal-visible {
+    opacity: 1;
+    pointer-events: all;
+}
+.share-modal-card {
+    position: relative;
+    width: 90%;
+    max-width: 420px;
+    padding: 28px 24px 24px;
+    text-align: center;
+    border: 1px solid rgba(0, 210, 255, 0.2);
+    box-shadow: 0 0 60px rgba(0, 210, 255, 0.1);
+    animation: none;
+}
+.share-modal-close {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    background: rgba(255,255,255,0.08);
+    border: none;
+    color: var(--text-secondary);
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    line-height: 28px;
+    transition: background 0.2s;
+}
+.share-modal-close:hover { background: rgba(255,255,255,0.18); }
+.share-preview-box {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    text-align: left;
+}
+.share-preview-text {
+    font-family: 'Inter', monospace;
+    font-size: 0.82rem;
+    color: var(--text-primary);
+    white-space: pre-wrap;
+    margin: 0;
+    line-height: 1.6;
+}
+.share-platform-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 4px;
+}
+.share-platform-btn {
+    font-size: 0.85rem;
+    padding: 10px 8px;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    transition: transform 0.15s, opacity 0.15s;
+}
+.share-platform-btn:hover { transform: translateY(-2px); opacity: 0.9; }
+.share-twitter  { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid rgba(255,255,255,0.15); }
+.share-whatsapp { background: linear-gradient(135deg, #075e54, #128c7e); }
+.share-telegram { background: linear-gradient(135deg, #0088cc, #2ca5e0); }
+.share-facebook { background: linear-gradient(135deg, #1877f2, #42a5f5); }
+

@@ -177,7 +177,7 @@
 
         <!-- ── COMPOUND CHAIN INTERFACE ──────────────────────── -->
         <div id="game-cc" class="glass-panel hidden animate-slide-up">
-            <button class="back-btn" onclick="app.showCatalogue()">← Return to Arcade</button>
+            <button class="back-btn" onclick="compoundChainGame.confirmQuit()">← Return to Arcade</button>
             <div class="cc-container">
                 <div style="display:flex; justify-content:space-between; align-items:center; width: 100%;">
                     <div>
@@ -205,6 +205,8 @@
                     <div class="hint-card" id="cc-hint-card">
                         <div style="font-size: 0.85rem; text-transform: uppercase; color: var(--accent-purple); letter-spacing: 2px; margin-bottom:4px;">Clue</div>
                         <div class="hint-text" id="cc-hint">Loading...</div>
+                        <!-- Letter reveals appear here — base clue above is never overwritten -->
+                        <div id="cc-hint-reveal" style="font-size:0.85rem; color:var(--accent-green-light); margin-top:6px; font-weight:600; letter-spacing:1px;"></div>
                     </div>
                     <button class="btn btn-hint" onclick="compoundChainGame.buyHint()" id="cc-buy-hint">🔍 Reveal Letter (−50 Pts)</button>
                     <form id="cc-form" onsubmit="compoundChainGame.submitGuess(event)" class="input-form" style="margin-top:10px;">
@@ -213,6 +215,19 @@
                     </form>
                     <div class="status-msg" id="cc-status"></div>
                     <div class="status-msg" id="cc-status-timer" style="color: var(--text-secondary); font-size:0.85rem;"></div>
+                </div>
+
+                <!-- ── QUIT CONFIRM OVERLAY ── -->
+                <div id="cc-quit-overlay" class="cc-quit-overlay hidden">
+                    <div class="cc-quit-card glass-panel">
+                        <div style="font-size:2rem; margin-bottom:8px;">⏸</div>
+                        <h3 style="margin:0 0 6px 0; font-family:'Outfit',sans-serif;">Quit this run?</h3>
+                        <p style="color:var(--text-secondary); font-size:0.9rem; margin:0 0 12px 0;">Score: <strong id="cc-quit-score" style="color:var(--accent-green-light);">0</strong> pts &mdash; if it's a new record, you'll be able to share it.</p>
+                        <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+                            <button class="btn btn-cc" onclick="compoundChainGame._saveAndQuit()">💾 Save &amp; Quit</button>
+                            <button class="btn" style="background:rgba(255,255,255,0.1);" onclick="compoundChainGame._dismissQuit()">↩ Keep Playing</button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- ── END SCREEN (shown after chain complete) ── -->
@@ -242,14 +257,12 @@
                             <button class="btn btn-sr daily-end-cta-btn" id="cc-next-run-btn" onclick="app.launchGame('sr')">
                                 ⚔️ Shiritori Royale
                             </button>
-                            <button class="btn btn-cc daily-end-cta-btn" onclick="app.showCatalogue()">
+                            <button class="btn btn-cc daily-end-cta-btn" id="cc-arcade-btn" onclick="app.showCatalogue()">
                                 🏠 Arcade
                             </button>
                         </div>
 
-                        <button class="back-btn daily-end-back" onclick="app.showCatalogue()">
-                            ← Return to Arcade
-                        </button>
+
                     </div>
                 </div>
             </div>
@@ -348,7 +361,51 @@
             </div>
         </div>
         
+        <!-- ═══════════════════════════════════════════════════════════
+             UNIVERSAL SHARE MODAL — used by both Compound Chain and Shiritori
+             shareManager.openModal(text) targets #share-modal
+        ════════════════════════════════════════════════════════════════ -->
+        <div id="share-modal" class="share-modal-backdrop hidden">
+            <div class="share-modal-card glass-panel">
+                <button class="share-modal-close" onclick="shareManager.closeModal()">✕</button>
+                <h3 style="margin:0 0 4px 0; font-family:'Outfit',sans-serif; font-size:1.1rem;">📤 Share Your Score</h3>
+                <p style="color:var(--text-secondary); font-size:0.8rem; margin:0 0 14px 0;">Pick a platform or copy the text below</p>
+
+                <!-- Score preview card -->
+                <div class="share-preview-box">
+                    <pre id="share-preview-text" class="share-preview-text"></pre>
+                </div>
+
+                <!-- Platform buttons -->
+                <div class="share-platform-grid">
+                    <button id="twitter-btn" class="btn share-platform-btn share-twitter" onclick="shareManager.shareTwitter()">
+                        𝕏 Twitter
+                    </button>
+                    <button id="whatsapp-btn" class="btn share-platform-btn share-whatsapp" onclick="shareManager.shareWhatsApp()">
+                        💬 WhatsApp
+                    </button>
+                    <button id="telegram-btn" class="btn share-platform-btn share-telegram" onclick="shareManager.shareTelegram()">
+                        ✈️ Telegram
+                    </button>
+                    <button id="facebook-btn" class="btn share-platform-btn share-facebook" onclick="shareManager.shareFacebook()">
+                        👥 Facebook
+                    </button>
+                </div>
+
+                <!-- Copy + Native -->
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <button id="copy-btn" class="btn btn-cc" style="flex:1;" onclick="shareManager.copyToClipboard()">
+                        📋 Copy Text
+                    </button>
+                    <button class="btn btn-sr" style="flex:1;" onclick="shareManager.shareNative()">
+                        🔗 Share…
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Ownership Footer (only visible in catalogue) -->
+
         <footer id="credits-footer" style="margin-top: auto; padding-top: 30px; padding-bottom: 20px; text-align: center; z-index: 100;">
             <p style="color: rgba(255,255,255,0.4); font-size: 0.85rem; margin: 0; font-family: 'Inter', sans-serif;">
                 Developed &amp; Engineered by 

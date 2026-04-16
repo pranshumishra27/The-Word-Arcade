@@ -115,6 +115,59 @@ const compoundChainGame = {
         clearInterval(this.timer);
     },
 
+    // ── Quit Management ───────────────────────────────────────────────────
+    // Called by the ← back button. Pauses the run and shows a confirm dialog.
+    confirmQuit: function() {
+        // If game isn't active (already on end screen), just exit directly
+        if (!this.isPlaying && !this.levelData) {
+            app.showCatalogue();
+            return;
+        }
+        // Pause the timer while the dialog is open
+        this.isPlaying = false;
+        clearInterval(this.timer);
+
+        // Update the score preview in the dialog
+        const scoreEl = document.getElementById('cc-quit-score');
+        if (scoreEl) scoreEl.textContent = this.score;
+
+        const overlay = document.getElementById('cc-quit-overlay');
+        if (overlay) {
+            overlay.classList.remove('hidden');
+            void overlay.offsetWidth; // force reflow for animation
+            overlay.classList.add('cc-quit-visible');
+        }
+    },
+
+    // Dismisses the quit dialog and resumes the timer
+    _dismissQuit: function() {
+        const overlay = document.getElementById('cc-quit-overlay');
+        if (overlay) {
+            overlay.classList.remove('cc-quit-visible');
+            setTimeout(() => overlay.classList.add('hidden'), 250);
+        }
+        // Resume only if the run is still in progress
+        if (this.levelData && this.currentWordIndex < this.levelData.chain.length - 1) {
+            this.isPlaying = true;
+            this.startTimer();
+        }
+    },
+
+    // Saves score if it's a new high, opens share modal automatically, then exits
+    _saveAndQuit: function() {
+        if (this.score > 0 && this.score > (app.player.ccHighScore || 0)) {
+            app.player.ccHighScore = this.score;
+            app.saveProfile();
+            // Auto-open share modal on new record — no extra button needed
+            if (typeof shareManager !== 'undefined') {
+                this.shareResult();
+            } else {
+                if (typeof fx !== 'undefined') fx.toast(`🏆 New record — ${this.score} pts!`, 'success');
+            }
+        }
+        app.showCatalogue();
+    },
+
     startTimer: function() {
         clearInterval(this.timer);
         const timerFill  = document.getElementById('cc-timer');
@@ -170,17 +223,18 @@ const compoundChainGame = {
         document.getElementById('cc-score').textContent = this.score;
         if(typeof sfx !== 'undefined') sfx.playClick();
 
-        const hintEl = document.getElementById('cc-hint');
+        // Write letter reveals to a SEPARATE element — never overwrite the base clue
+        const revealEl = document.getElementById('cc-hint-reveal');
 
         if (this.hintsUsedForWord === 1) {
-            hintEl.textContent = `${baseHint} — starts with "${targetWord[0].toUpperCase()}"…`;
+            if (revealEl) revealEl.textContent = `Starts with "${targetWord[0].toUpperCase()}"…`;
         } else if (this.hintsUsedForWord === 2) {
             const preview = targetWord.slice(0, 2).toUpperCase();
-            hintEl.textContent = `Starts with "${preview}" — ${targetWord.length} letters total`;
+            if (revealEl) revealEl.textContent = `Starts with "${preview}" — ${targetWord.length} letters total`;
         } else {
             const half = Math.ceil(targetWord.length / 2);
             const preview = targetWord.slice(0, half).toUpperCase() + '…';
-            hintEl.textContent = `It starts: ${preview}  (${targetWord.length} letters)`;
+            if (revealEl) revealEl.textContent = `It starts: ${preview}  (${targetWord.length} letters)`;
         }
 
         const btnEl = document.getElementById('cc-buy-hint');
@@ -215,6 +269,9 @@ const compoundChainGame = {
         if (this.currentWordIndex < this.levelData.chain.length - 1) {
             this.hintsUsedForWord = 0;
             document.getElementById('cc-hint').textContent = this.levelData.hints[this.currentWordIndex + 1];
+            // Always clear the reveal line when moving to a new word
+            const revealEl = document.getElementById('cc-hint-reveal');
+            if (revealEl) revealEl.textContent = '';
             document.getElementById('cc-input').focus();
         } else {
             this.isPlaying = false;
@@ -471,6 +528,7 @@ const compoundChainGame = {
         const titleEl  = document.getElementById('daily-end-title');
         const shareBtn = document.getElementById('cc-share-btn');
         const nextRunBtn = document.getElementById('cc-next-run-btn');
+        const arcadeBtn  = document.getElementById('cc-arcade-btn');
 
         if (this.isDailyMode) {
             const streak = typeof daily !== 'undefined' ? daily.getStreak() : 0;
@@ -483,13 +541,20 @@ const compoundChainGame = {
                 shareBtn.classList.remove('hidden');
                 shareBtn.onclick = () => this.shareDailyResult();
             }
+            // Route into active game loops — keeps engagement after the daily is consumed
             if (nextRunBtn) {
-                nextRunBtn.innerHTML = "⚔️ Shiritori Royale";
-                nextRunBtn.onclick = () => app.launchGame('sr');
+                nextRunBtn.innerHTML = "🧩 Compound Chain";
+                nextRunBtn.className = 'btn btn-cc daily-end-cta-btn';
+                nextRunBtn.onclick = () => app.launchGame('cc');
+            }
+            if (arcadeBtn) {
+                arcadeBtn.innerHTML = "⚔️ Shiritori Royale";
+                arcadeBtn.className = 'btn btn-sr daily-end-cta-btn';
+                arcadeBtn.onclick = () => app.launchGame('sr');
             }
         } else {
             if (streakEl) streakEl.classList.add('hidden');
-            
+
             if (this.perfectRun) {
                 if (titleEl) {
                     titleEl.textContent = '⚡ Perfect Run!';
@@ -501,22 +566,22 @@ const compoundChainGame = {
                     titleEl.style.color = isNewHigh ? '#ffd700' : 'var(--accent-green-light)';
                 }
             }
-            
-            if (shareBtn) {
-                if (isNewHigh) {
-                    shareBtn.classList.remove('hidden');
-                    shareBtn.onclick = () => this.shareResult();
-                } else {
-                    shareBtn.classList.add('hidden');
-                }
-            }
 
+            if (shareBtn) {
+                // Always offer share — not just on new highs
+                shareBtn.classList.remove('hidden');
+                shareBtn.onclick = () => this.shareResult();
+            }
+            // In free-play: restore defaults so they work if the user re-enters daily later
             if (nextRunBtn) {
                 nextRunBtn.innerHTML = "↻ New Run";
-                nextRunBtn.onclick = () => {
-                    this._hideEndScreen();
-                    this.init();
-                };
+                nextRunBtn.className = 'btn btn-sr daily-end-cta-btn';
+                nextRunBtn.onclick = () => { this._hideEndScreen(); this.init(); };
+            }
+            if (arcadeBtn) {
+                arcadeBtn.innerHTML = "⚔️ Shiritori Royale";
+                arcadeBtn.className = 'btn btn-sr daily-end-cta-btn';
+                arcadeBtn.onclick = () => app.launchGame('sr');
             }
         }
 
@@ -564,18 +629,32 @@ const compoundChainGame = {
         const streak = typeof daily !== 'undefined' ? daily.getStreak() : 0;
         const score  = this.score;
 
-        // Build a dynamic brag line
-        const brags = [
-            `I've been on a ${streak}-day streak & I'm not stopping.`,
-            `${streak} days straight. My vocabulary is BUILT different.`,
-            `Day ${streak} of outsmarting the algorithm. 🧠`
-        ];
-        const brag = streak > 1
-            ? brags[Math.floor(Math.random() * brags.length)]
-            : `First attempt. Nailed it. 🎯`;
+        // ── Opener based on System Integrity (hints used + score) ──────
+        let opener;
+        if (!this.hintUsed) {
+            // Perfect run — zero hints
+            const perfect = [
+                `⚡ Flawless logic. Solved the Daily Compound without a single hint.`,
+                `⚡ Zero hints. Pure vocabulary. Today's chain is linked.`,
+                `⚡ Didn't need a single clue. The circuits are linked.`
+            ];
+            opener = perfect[Math.floor(Math.random() * perfect.length)];
+        } else if (score < 50) {
+            // Struggle run — low score implies many wrong guesses + hints
+            const struggles = [
+                `💀 My brain short-circuited entirely, but I finally linked today's Compound Chain.`,
+                `I barely survived that. English is officially my second language now. 📉`,
+                `That challenge humbled me. Send help. And a dictionary. 🆘`
+            ];
+            opener = struggles[Math.floor(Math.random() * struggles.length)];
+        } else {
+            // Standard performance
+            opener = `🧩 Daily Compound complete. The circuits are linked.`;
+        }
 
-        const bars   = '🟩'.repeat(4);
-        const hooks  = [
+        const streakLine = streak > 1 ? `🔥 ${streak}-day streak.` : `🎯 First attempt. Nailed it.`;
+        const bars  = '🟩'.repeat(4);
+        const hooks = [
             "Think you can beat that?",
             "Bet you can't top it. 👀",
             "Can you keep up?",
@@ -586,7 +665,8 @@ const compoundChainGame = {
         const text =
 `🔥 Word Arcade — Daily Challenge
 ${bars}  ${score} pts
-${brag}
+${opener}
+${streakLine}
 
 ${hook}`;
 
@@ -604,21 +684,41 @@ ${hook}`;
         const isNewHigh = score >= prev;
 
         // Progress emoji grid
-        const easyBar   = '🟢'.repeat(Math.min(levelsCompleted, 4))  + '⬜'.repeat(Math.max(0, 4 - levelsCompleted));
-        const medBar    = '🟡'.repeat(Math.min(Math.max(0, levelsCompleted - 4), 4)) + '⬜'.repeat(Math.max(0, 4 - Math.max(0, levelsCompleted - 4)));
-        const hardBar   = '🔴'.repeat(Math.min(Math.max(0, levelsCompleted - 8), 2)) + '⬜'.repeat(Math.max(0, 2 - Math.max(0, levelsCompleted - 8)));
+        const easyBar = '🟢'.repeat(Math.min(levelsCompleted, 4))        + '⬜'.repeat(Math.max(0, 4 - levelsCompleted));
+        const medBar  = '🟡'.repeat(Math.min(Math.max(0, levelsCompleted - 4), 4)) + '⬜'.repeat(Math.max(0, 4 - Math.max(0, levelsCompleted - 4)));
+        const hardBar = '🔴'.repeat(Math.min(Math.max(0, levelsCompleted - 8), 2)) + '⬜'.repeat(Math.max(0, 2 - Math.max(0, levelsCompleted - 8)));
         const grid = `${easyBar}${medBar}${hardBar}`;
 
-        const openers = [
-            `I just linked ${levelsCompleted} compound word chains without breaking a sweat. 💪`,
-            `${levelsCompleted} chains. ${score} points. No mercy. 🧩`,
-            `My brain just solved ${levelsCompleted} compound chains. What's your excuse? 😂`
-        ];
-        const opener = openers[Math.floor(Math.random() * openers.length)];
+        // ── Opener based on System Integrity (hints + score quality) ───
+        let opener;
+        if (isPerfect) {
+            const perfect = [
+                `⚡ Flawless logic. Solved ${levelsCompleted} chains without a single hint.`,
+                `⚡ ${levelsCompleted} chains. Zero hints. Pure vocabulary.`,
+                `⚡ Didn't need a single clue. ${levelsCompleted} circuits linked.`
+            ];
+            opener = perfect[Math.floor(Math.random() * perfect.length)];
+        } else if (this.hintUsed || score < levelsCompleted * 40) {
+            // Struggle: used hints or score suggests many wrong guesses
+            const struggles = [
+                `💀 My brain short-circuited entirely, but I finally linked ${levelsCompleted} chains.`,
+                `I suffered, my brain melted, but I got through ${levelsCompleted} chains. 📉`,
+                `That run completely humbled me. Time to read a dictionary. 🆘`
+            ];
+            opener = struggles[Math.floor(Math.random() * struggles.length)];
+        } else {
+            // Standard solid performance
+            const standards = [
+                `I just linked ${levelsCompleted} compound word chains without breaking a sweat. 💪`,
+                `${levelsCompleted} chains. ${score} points. No mercy. 🧩`,
+                `My brain just solved ${levelsCompleted} compound chains. The circuits are linked.`
+            ];
+            opener = standards[Math.floor(Math.random() * standards.length)];
+        }
 
         const extras = [];
-        if (isPerfect) extras.push('⚡ Perfect Run — zero hints used!');
-        if (isNewHigh) extras.push('🏆 Personal Best smashed!');
+        if (isPerfect)  extras.push('⚡ Perfect Run — zero hints used!');
+        if (isNewHigh)  extras.push('🏆 Personal Best smashed!');
         const extraLine = extras.length ? '\n' + extras.join('  ') : '';
 
         const hooks = [

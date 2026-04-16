@@ -205,5 +205,33 @@ const COMPOUND_LEVELS = [
     { id: 177, tier: "hard", chain: ["shadow", "box", "car", "wash"], hints: ["Dark silhouette", "Cardboard container", "Automobile", "To clean"] },
     { id: 178, tier: "hard", chain: ["sun", "dial", "up", "beat"], hints: ["Our star", "To enter a phone number", "Opposite of down", "Musical pulse"] },
     { id: 179, tier: "hard", chain: ["moon", "scape", "goat", "herd"], hints: ["Earth's natural satellite", "A viewpoint or scene", "Bleating animal", "Group of animals"] },
-    { id: 180, tier: "hard", chain: ["star", "board", "walk", "way"], hints: ["Night sky light", "Flat piece of wood", "Movement on foot", "A path"] }
+    { id: 180, tier: "hard", chain: ["star", "board", "walk", "way"], hints: ["Night sky light", "Flat piece of wood", "Movement on foot", "A path"] },
+
+    // ══════════════════════════════════════════════════════════════════
+    //  EXPANSION PACK — Diverse terminals to reduce word repetition
+    //  Specifically avoids work/out/back/house/way/side as terminal words
+    // ══════════════════════════════════════════════════════════════════
+
+    // ── Easy ───────────────────────────────────────────────────────────
+    { id: 181, tier: "easy", chain: ["arm",     "chair",  "man",    "hunt"],   hints: ["Limb of the body",      "Furniture for sitting",     "Adult male",             "To search intensely"] },
+    { id: 182, tier: "easy", chain: ["butter", "cup", "cake", "walk"], hints: ["Dairy spread", "Drinking vessel", "Sweet baked treat", "An easy task or parade stride"] },
+    { id: 183, tier: "easy", chain: ["door",    "bell",   "hop",    "scotch"], hints: ["Entry panel",            "A ringing sound",           "To jump on one foot",    "A classic playground game"] },
+    { id: 184, tier: "easy", chain: ["ear",     "worm",   "wood",   "pecker"], hints: ["Hearing organ",          "Crawling creature",         "Material from trees",    "A rhythmic bird"] },
+    { id: 185, tier: "easy", chain: ["cup",     "board",  "room",   "mate"],   hints: ["Drinking vessel",        "Flat piece of wood",        "A chamber",              "A companion"] },
+    { id: 186, tier: "easy", chain: ["hand",    "bag",    "pipe",   "dream"],  hints: ["End of the arm",         "A carrying pouch",          "A hollow tube",          "A wishful fantasy"] },
+    { id: 187, tier: "easy", chain: ["tooth",   "brush",  "fire",   "place"],  hints: ["Part of the mouth",      "A cleaning tool",           "Hot combustion",         "A hearth structure"] },
+
+    // ── Medium ─────────────────────────────────────────────────────────
+    { id: 188, tier: "medium", chain: ["fire",    "side",   "step",  "child"],  hints: ["Hot combustion",         "An edge or surface",        "A stair",                "Young human"] },
+    { id: 189, tier: "medium", chain: ["thunder", "clap",   "board", "game"],   hints: ["Loud sky boom",          "To applaud",                "Flat piece of wood",     "Recreational activity"] },
+    { id: 190, tier: "medium", chain: ["over",    "board",  "game",  "play"],   hints: ["Excessive or too far",   "Flat piece of wood",        "Recreational activity",  "To have fun"] },
+    { id: 191, tier: "medium", chain: ["cat",     "fish",   "hook",  "up"],     hints: ["Feline animal",          "Aquatic creature",          "Curved metal catch",     "To connect"] },
+    { id: 192, tier: "medium", chain: ["check",   "mate",   "ship",  "yard"],   hints: ["To verify or a pattern", "A companion",               "A large vessel",         "Open area of land"] },
+    { id: 193, tier: "medium", chain: ["sun",     "burn",   "out",   "fit"],    hints: ["Our star",               "To char with heat",         "To exhaust completely",  "Clothing or a set"] },
+
+    // ── Hard ───────────────────────────────────────────────────────────
+    { id: 194, tier: "hard", chain: ["rain",    "coat",   "tail",  "gate"],    hints: ["Falling water",           "Outerwear jacket",          "End of a garment",       "A rear entrance ramp"] },
+    { id: 195, tier: "hard", chain: ["cat",     "nap",    "kin",   "ship"],    hints: ["Feline animal",           "A short sleep",             "Table fabric",           "A relationship"] },
+    { id: 196, tier: "hard", chain: ["ear",     "ring",   "leader", "ship"],    hints: ["Hearing organ",            "Circular jewelry",          "One who leads a group",  "The act of guiding"] },
+    { id: 197, tier: "hard", chain: ["pig",     "tail",   "gate",  "keeper"],  hints: ["Swine animal",            "Animal's rear appendage",   "A rear entrance ramp",   "One who guards"] }
 ];
