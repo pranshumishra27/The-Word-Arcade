@@ -99,7 +99,13 @@ const shiritoriGame = {
         }
 
         document.getElementById('sr-rank-badge').textContent = `Tier ${this.currentTier + 1} / ${AI_TIERS.length}`;
-        document.getElementById('sr-post-game').classList.add('hidden');
+        
+        const endEl = document.getElementById('sr-end');
+        if (endEl) {
+            endEl.classList.remove('daily-end-visible');
+            endEl.classList.add('hidden');
+        }
+        
         document.getElementById('sr-form').classList.remove('hidden');
         document.getElementById('sr-input').disabled = false;
         
@@ -127,12 +133,7 @@ const shiritoriGame = {
         this.currentLetter = initWord.slice(-1).toUpperCase();
         this.usedWords.add(initWord.toLowerCase());
         
-        // Update next button
-        const nextBtn = document.getElementById('sr-next-btn');
-        if (nextBtn) {
-            const nextTier = AI_TIERS[this.currentTier + 1];
-            nextBtn.textContent = nextTier ? `Fight ${nextTier.name} →` : 'Play Again →';
-        }
+        // [Button visually resets in endGame()]
         
         this.updateUI();
         this.setStatus('Round Start! Word ends in ' + this.currentLetter, false);
@@ -369,73 +370,33 @@ const shiritoriGame = {
         return best ? { word: best, distance: bestDist } : null;
     },
 
-    // Builds a contextual error message based on how close the player's word
-    // was to a valid dictionary entry. Tier personality is layered on top.
+    // Returns purely flavor-based reject message (bypassing semantic near-misses)
     _getInvalidWordMessage: function(input) {
-        const closest = this._getClosestWord(input, this.currentLetter);
         const tier = this.currentTier;
-
-        if (closest && closest.distance <= 2) {
-            // Near-miss — close to a real word, give encouraging / teasing hint
-            const nearMissMessages = [
-                [
-                    // Bronze — casual & encouraging
-                    `Almost! Did you mean "${closest.word}"? 🤔`,
-                    `So close! "${closest.word}" would've worked! 💪`,
-                    `One letter off! Try "${closest.word}" next time! ✨`,
-                ],
-                [
-                    // Silver — wry acknowledgment
-                    `Interesting attempt. "${closest.word}" exists though. 🧐`,
-                    `Close, but no. "${closest.word}" is what you were reaching for.`,
-                    `Almost cracked it — "${closest.word}" was right there! 🔎`,
-                ],
-                [
-                    // Gold — backhanded
-                    `Impressive effort, but "${closest.word}" was the word you sought.`,
-                    `A skilled mind wobbles — "${closest.word}" was your target. 🎯`,
-                    `You were one move away. "${closest.word}" would've landed. 🔥`,
-                ],
-                [
-                    // Overlord — theatrical
-                    `Even you were so close... "${closest.word}" slipped through your fingers. 😈`,
-                    `"${closest.word}" — so near, yet so beneath you. Try harder.`,
-                    `A glimmer of potential. "${closest.word}" was the word. Don't waste it. 🌌`,
-                ]
-            ];
-            const pool = nearMissMessages[Math.min(tier, 3)];
-            return pool[Math.floor(Math.random() * pool.length)];
-        } else {
-            // Far off — the word isn't close to anything valid
-            const farOffMessages = [
-                [
-                    // Bronze — blunt
-                    `"${input}"? That's not a word, rookie! ❌`,
-                    `Did you just make that up? Not in the dictionary! 🤦`,
-                    `Nope! "${input}" isn't a real word. Try again! 🚫`,
-                ],
-                [
-                    // Silver — condescending
-                    `"${input}"... that's not a word. Disappointing.`,
-                    `The dictionary has never heard of "${input}". Neither have I. 😒`,
-                    `I expected more from you than "${input}". Not a real word.`,
-                ],
-                [
-                    // Gold — dismissive elegance
-                    `"${input}" is not a word. I expected better from this caliber of opponent.`,
-                    `No dictionary in existence contains "${input}". Recalibrate. 📖`,
-                    `A phantom word. "${input}" does not exist. Focus.`,
-                ],
-                [
-                    // Overlord — menacing
-                    `"${input}"? You dare submit that to a Lexical Overlord?! OBLITERATED. 🌑`,
-                    `That is not a word. That is noise. Like you. ❌`,
-                    `"${input}" — a whisper of incompetence. Not found. Not accepted. 👁️`,
-                ]
-            ];
-            const pool = farOffMessages[Math.min(tier, 3)];
-            return pool[Math.floor(Math.random() * pool.length)];
-        }
+        const messages = [
+            [
+                `"${input}"? That's not a word, rookie! ❌`,
+                `Did you just make that up? Not in the dictionary! 🤦`,
+                `Nope! "${input}" isn't a real word. Try again! 🚫`,
+            ],
+            [
+                `"${input}"... that's not a word. Disappointing.`,
+                `The dictionary has never heard of "${input}". Neither have I. 😒`,
+                `I expected more from you than "${input}". Not a real word.`,
+            ],
+            [
+                `"${input}" is not a word. I expected better from this caliber of opponent.`,
+                `No dictionary in existence contains "${input}". Recalibrate. 📖`,
+                `A phantom word. "${input}" does not exist. Focus.`,
+            ],
+            [
+                `"${input}"? You dare submit that to a Lexical Overlord?! OBLITERATED. 🌑`,
+                `That is not a word. That is noise. Like you. ❌`,
+                `"${input}" — a whisper of incompetence. Not found. Not accepted. 👁️`,
+            ]
+        ];
+        const pool = messages[Math.min(tier, 3)];
+        return pool[Math.floor(Math.random() * pool.length)];
     },
 
     submitWord: async function(e) {
@@ -490,39 +451,15 @@ const shiritoriGame = {
             return;
         }
 
-        // --- Validation Layer 3: Live Dictionary API fallback ---
-        this.setStatus('Checking word...', false);
-        inputEl.disabled = true;
-
-        try {
-            const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${input}`, {
-                signal: AbortSignal.timeout(4000)
-            });
-
-            if(res.ok) {
-                // Word is real! Cache it in local Set for this session so we don't call API again
-                this.dictionary.add(input);
-                inputEl.disabled = false;
-                this._acceptWord(input);
-            } else {
-                // 404 = not a valid English word — show contextual feedback
-                inputEl.disabled = false;
-                if(typeof sfx !== 'undefined') sfx.playError();
-                const msg = this._getInvalidWordMessage(input);
-                this.setStatus(msg, true);
-                if(typeof fx !== 'undefined') fx.screenShake(5, 200);
-                setTimeout(() => {
-                    const statusEl = document.getElementById('sr-status');
-                    if(statusEl && statusEl.textContent === msg) this.setStatus('Your turn!', false);
-                }, 3500);
-            }
-        } catch(err) {
-            // API offline or timed out — fall back to local dictionary only
-            inputEl.disabled = false;
-            console.warn('Dictionary API unreachable. Using local dictionary only.');
-            if(typeof fx !== 'undefined') fx.toast('Offline mode: Using local dictionary', 'error');
-            this.setStatus('Your turn!', false);
-        }
+        // --- Word not found in offline dictionary ---
+        if(typeof sfx !== 'undefined') sfx.playError();
+        const msg = this._getInvalidWordMessage(input);
+        this.setStatus(msg, true);
+        if(typeof fx !== 'undefined') fx.screenShake(5, 200);
+        setTimeout(() => {
+            const statusEl = document.getElementById('sr-status');
+            if(statusEl && statusEl.textContent === msg) this.setStatus('Your turn!', false);
+        }, 3500);
     },
 
     _acceptWord: function(input) {
@@ -621,11 +558,25 @@ const shiritoriGame = {
         setTimeout(() => {
             let aiWord = null;
             let possibleWords = [];
+            const isBotTier = this.currentTier < 2;
+            const sourceDict = (isBotTier && typeof BOT_DICTIONARY !== 'undefined') ? BOT_DICTIONARY : Array.from(this.dictionary);
+            const t = this.currentTier;
 
-            for(let word of this.dictionary) {
+            for(let word of sourceDict) {
                 if(word.startsWith(this.currentLetter.toLowerCase()) && !this.usedWords.has(word)) {
-                    possibleWords.push(word);
-                    if(possibleWords.length > (40 - this.currentTier * 10)) break; // Higher tier = harder words
+                    if (t === 0 && word.length >= 3 && word.length <= 6) possibleWords.push(word);
+                    else if (t === 1 && word.length >= 5 && word.length <= 8) possibleWords.push(word);
+                    else if (t === 2 && word.length >= 6) possibleWords.push(word);
+                    else if (t === 3 && word.length >= 7) possibleWords.push(word);
+                }
+            }
+
+            // Fallback if constrained lengths yield nothing
+            if(possibleWords.length === 0) {
+                for(let word of sourceDict) {
+                    if(word.startsWith(this.currentLetter.toLowerCase()) && !this.usedWords.has(word)) {
+                        possibleWords.push(word);
+                    }
                 }
             }
 
@@ -670,25 +621,85 @@ const shiritoriGame = {
         this._waitingInterval = null;
         document.body.classList.remove('fever-mode');
         document.getElementById('sr-form').classList.add('hidden');
-        document.getElementById('sr-post-game').classList.remove('hidden');
         
-        // Save score if higher
-        let isNewHigh = false;
-        if (this.score > app.player.srHighScore) {
-            app.player.srHighScore = this.score;
-            isNewHigh = true;
-            app.saveProfile();
-        }
-        
-        if (this.playerHp <= 0) {
-            if(typeof sfx !== 'undefined') sfx.playError();
-            this.setStatus("DEFEAT...", true);
-            fx.screenPulse();
-        } else {
-            if(typeof sfx !== 'undefined') sfx.playVictory();
-            this.setStatus(isNewHigh ? "VICTORY! NEW RECORD!" : "VICTORY!", false);
-            fx.createExplosion(window.innerWidth/2, window.innerHeight/2, '#ffd700', 100);
-        }
+        setTimeout(() => {
+            // Save score if higher
+            let isNewHigh = false;
+            if (this.score > app.player.srHighScore) {
+                app.player.srHighScore = this.score;
+                isNewHigh = true;
+                app.saveProfile();
+            }
+            
+            const endEl = document.getElementById('sr-end');
+            const scoreEl = document.getElementById('sr-end-score');
+            const titleEl = document.getElementById('sr-end-title');
+            const subtitleEl = document.getElementById('sr-end-subtitle');
+            const emojiEl = document.getElementById('sr-end-emoji');
+            const nBtn = document.getElementById('sr-next-btn');
+            const shareBtn = document.getElementById('sr-share-btn');
+            const dividerEl = document.getElementById('sr-end-divider');
+            const arcadeBtn = document.getElementById('sr-arcade-btn');
+
+            if(scoreEl) scoreEl.textContent = this.score;
+            if(subtitleEl) subtitleEl.textContent = `Vs ${AI_TIERS[this.currentTier].name}`;
+
+            if (this.playerHp <= 0) {
+                if (shareBtn) shareBtn.classList.add('hidden');
+                if (dividerEl) dividerEl.classList.add('hidden');
+                
+                if(typeof sfx !== 'undefined') sfx.playError();
+                this.setStatus("DEFEAT...", true);
+                fx.screenPulse();
+
+                if (titleEl) {
+                    titleEl.textContent = "DEFEATED!";
+                    titleEl.style.color = "var(--accent-red-light)";
+                }
+                if(emojiEl) emojiEl.textContent = '💀';
+                if(nBtn) {
+                    nBtn.textContent = "Try Again ↻";
+                    nBtn.style.background = "rgba(242, 201, 76, 0.15)";
+                    nBtn.style.color = "#f2c94c";
+                    nBtn.style.borderColor = "#f2c94c";
+                }
+                if(arcadeBtn) {
+                    arcadeBtn.innerHTML = "🧩 Compound Chain";
+                    arcadeBtn.onclick = () => app.launchGame('cc');
+                }
+            } else {
+                if (shareBtn) shareBtn.classList.remove('hidden');
+                if (dividerEl) dividerEl.classList.remove('hidden');
+                
+                if(typeof sfx !== 'undefined') sfx.playVictory();
+                this.setStatus(isNewHigh ? "VICTORY! NEW RECORD!" : "VICTORY!", false);
+                fx.createExplosion(window.innerWidth/2, window.innerHeight/2, '#ffd700', 100);
+
+                if (titleEl) {
+                    titleEl.textContent = isNewHigh ? "🏆 New Record!" : "VICTORY!";
+                    titleEl.style.color = isNewHigh ? "#ffd700" : "var(--accent-green-light)";
+                }
+                if(emojiEl) emojiEl.textContent = '👑';
+                
+                const nextTier = AI_TIERS[this.currentTier + 1];
+                if(nBtn) {
+                    nBtn.textContent = nextTier ? `Fight ${nextTier.name} →` : "Play Again →";
+                    nBtn.style.background = "";
+                    nBtn.style.color = "";
+                    nBtn.style.borderColor = "";
+                }
+                if(arcadeBtn) {
+                    arcadeBtn.innerHTML = "🏠 Arcade";
+                    arcadeBtn.onclick = () => app.showCatalogue();
+                }
+            }
+
+            if (endEl) {
+                endEl.classList.remove('hidden');
+                void endEl.offsetWidth;
+                endEl.classList.add('daily-end-visible');
+            }
+        }, 500);
     },
 
     nextMatch: function() {

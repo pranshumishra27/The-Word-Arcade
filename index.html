@@ -128,11 +128,11 @@
                     </div>
                     <div style="display:flex; gap:15px; flex-wrap:wrap;">
                         <div style="text-align:center;">
-                            <div style="font-size:0.75rem; color:var(--text-secondary);">🧩 Best</div>
+                            <div style="font-size:0.75rem; color:var(--text-secondary);">🧩 CC Best</div>
                             <div style="font-weight:800; color:#fff;" id="profile-cc-score">0</div>
                         </div>
                         <div style="text-align:center;">
-                            <div style="font-size:0.75rem; color:var(--text-secondary);">⚔️ Best</div>
+                            <div style="font-size:0.75rem; color:var(--text-secondary);">⚔️ SR Best</div>
                             <div style="font-weight:800; color:#fff;" id="profile-sr-score">0</div>
                         </div>
                         <div style="text-align:center;">
@@ -215,13 +215,7 @@
                     <div class="status-msg" id="cc-status-timer" style="color: var(--text-secondary); font-size:0.85rem;"></div>
                 </div>
 
-                <!-- CC Post-game share (free play) -->
-                <div id="cc-post-game" class="hidden" style="text-align:center; margin-top:15px;">
-                    <button class="btn" style="background:#1da1f2;" onclick="compoundChainGame.shareResult()">Share Score 🔗</button>
-                    <button class="btn btn-cc" style="margin-left:10px;" onclick="compoundChainGame.init()">New Run →</button>
-                </div>
-
-                <!-- ── DAILY END SCREEN (shown after daily chain complete) ── -->
+                <!-- ── END SCREEN (shown after chain complete) ── -->
                 <div id="daily-end" class="daily-end-overlay hidden">
                     <div class="daily-end-card">
                         <!-- Firework emoji top -->
@@ -237,19 +231,19 @@
                         </div>
 
                         <!-- Share button -->
-                        <button class="btn daily-end-share-btn" onclick="compoundChainGame.shareDailyResult()">
+                        <button class="btn daily-end-share-btn" id="cc-share-btn" onclick="compoundChainGame.shareResult()">
                             📤 Share Result
                         </button>
 
-                        <div class="daily-end-divider">— Play a game —</div>
+                        <div class="daily-end-divider">— What's Next? —</div>
 
                         <!-- CTA Buttons -->
                         <div class="daily-end-cta">
-                            <button class="btn btn-sr daily-end-cta-btn" onclick="app.launchGame('sr')">
+                            <button class="btn btn-sr daily-end-cta-btn" id="cc-next-run-btn" onclick="app.launchGame('sr')">
                                 ⚔️ Shiritori Royale
                             </button>
-                            <button class="btn btn-cc daily-end-cta-btn" onclick="app.launchGame('cc')">
-                                🧩 Compound Chain
+                            <button class="btn btn-cc daily-end-cta-btn" onclick="app.showCatalogue()">
+                                🏠 Arcade
                             </button>
                         </div>
 
@@ -318,9 +312,38 @@
                     <button type="submit" class="btn btn-sr">Attack ⚔️</button>
                 </form>
                 
-                <div id="sr-post-game" class="hidden" style="text-align:center; margin-top:15px;">
-                    <button class="btn" style="background:#1da1f2; margin-right:10px;" onclick="shiritoriGame.shareResult()">Share 🔗</button>
-                    <button class="btn btn-sr" id="sr-next-btn" onclick="shiritoriGame.nextMatch()">Next Tier →</button>
+                <!-- ── SHIRITORI END SCREEN ── -->
+                <div id="sr-end" class="daily-end-overlay hidden">
+                    <div class="daily-end-card">
+                        <!-- Reaction emoji top -->
+                        <div class="daily-end-firework" id="sr-end-emoji">⚔️</div>
+
+                        <h2 id="sr-end-title" class="daily-end-title">Match Complete!</h2>
+                        <div id="sr-end-subtitle" class="daily-end-streak" style="color:var(--text-secondary);">Vs Boss</div>
+
+                        <div class="daily-end-score-row">
+                            <span class="daily-end-score-label">Your Score</span>
+                            <span id="sr-end-score" class="daily-end-score-value">0</span>
+                            <span class="daily-end-score-label">pts</span>
+                        </div>
+
+                        <!-- Share button -->
+                        <button class="btn daily-end-share-btn" id="sr-share-btn" onclick="shiritoriGame.shareResult()">
+                            📤 Share Result
+                        </button>
+
+                        <div class="daily-end-divider" id="sr-end-divider">— What's Next? —</div>
+
+                        <!-- CTA Buttons -->
+                        <div class="daily-end-cta">
+                            <button class="btn btn-sr daily-end-cta-btn" id="sr-next-btn" onclick="shiritoriGame.nextMatch()">
+                                Next Tier →
+                            </button>
+                            <button class="btn btn-cc daily-end-cta-btn" id="sr-arcade-btn" onclick="app.showCatalogue()">
+                                🏠 Arcade
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -337,6 +360,7 @@
     
     <!-- Data includes -->
     <script src="data/dictionary.js"></script>
+    <script src="data/bot-dictionary.js"></script>
     <script src="data/extra-words.js"></script>
     <script src="data/compound-levels.js"></script>
     

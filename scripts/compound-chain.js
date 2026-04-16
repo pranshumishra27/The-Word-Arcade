@@ -28,6 +28,7 @@ const compoundChainGame = {
 
     init: function() {
         this.score = 0;
+        this.chainMultiplier = 1.0;
         this.hintUsed = false;
         this.perfectRun = true;
         this.isDailyMode = false;
@@ -36,20 +37,21 @@ const compoundChainGame = {
             document.getElementById('cc-player-name-display').textContent = `Player: ${app.player.name}`;
         }
         // Hide daily end screen if it was visible
-        this._hideDailyEnd();
+        this._hideEndScreen();
         this.currentRun = this._buildTieredRun();
         this.loadLevel(0);
     },
 
     initDaily: function() {
         this.score = 0;
+        this.chainMultiplier = 1.0;
         this.hintUsed = false;
         this.isDailyMode = true;
         document.getElementById('cc-score').textContent = "0";
         if(typeof app !== 'undefined' && app.player.name) {
             document.getElementById('cc-player-name-display').textContent = `Player: ${app.player.name}`;
         }
-        this._hideDailyEnd();
+        this._hideEndScreen();
         if(typeof daily !== 'undefined') {
             const lvl = daily.getDailyLevel();
             this.currentRun = [lvl];
@@ -62,36 +64,10 @@ const compoundChainGame = {
     loadLevel: function(index) {
         // ── Run complete ──
         if(index >= this.currentRun.length) {
-            if (this.isDailyMode) {
-                this._showDailyEnd();
-            } else {
-                // Update perfectRun flag one last time
-                if (this.hintUsed) this.perfectRun = false;
+            // Update perfectRun flag one last time
+            if (this.hintUsed) this.perfectRun = false;
 
-                const isPerfect = this.perfectRun;
-                const isNewHigh = this.score >= (app.player.ccHighScore || 0);
-
-                document.getElementById('cc-status').textContent =
-                    isPerfect ? '⚡ Perfect Run — Zero Hints!' : 'Run complete! Fantastic linkage!';
-                document.getElementById('cc-status').style.color =
-                    isPerfect ? '#b34bff' : 'var(--accent-green-light)';
-                document.getElementById('cc-hint').textContent = '🏆 Circuit Mastery Achieved!';
-
-                // Populate post-game panel
-                const newHighEl = document.getElementById('cc-new-high-badge');
-                if (newHighEl) newHighEl.classList.toggle('hidden', !isNewHigh);
-
-                const postEl = document.getElementById('cc-post-game');
-                if (postEl) postEl.classList.remove('hidden');
-
-                if(typeof fx !== 'undefined') {
-                    fx.createExplosion(window.innerWidth / 2, window.innerHeight / 2, '#ffd700', 80);
-                    if (isPerfect) setTimeout(() =>
-                        fx.createExplosion(window.innerWidth / 2, window.innerHeight / 2, '#b34bff', 60), 400);
-                }
-
-                setTimeout(() => { this.init(); }, 6000);
-            }
+            this._showEndScreen();
             return;
         }
 
@@ -114,8 +90,6 @@ const compoundChainGame = {
         document.getElementById('cc-status').textContent = '';
         const timerLabel = document.getElementById('cc-status-timer');
         if (timerLabel) timerLabel.textContent = '';
-        const postEl = document.getElementById('cc-post-game');
-        if (postEl) postEl.classList.add('hidden');
 
         // Daily mode: hide hint button entirely
         const hintBtn = document.getElementById('cc-buy-hint');
@@ -192,6 +166,7 @@ const compoundChainGame = {
         this.score -= 50;
         this.hintUsed = true;
         this.hintsUsedForWord++;
+        this.chainMultiplier = 1.0; // Reset streak on hint
         document.getElementById('cc-score').textContent = this.score;
         if(typeof sfx !== 'undefined') sfx.playClick();
 
@@ -249,19 +224,6 @@ const compoundChainGame = {
             this.score += levelScore;
             document.getElementById('cc-score').textContent = this.score;
 
-            // ── New High Score detection ──
-            const prevHigh = app.player.ccHighScore || 0;
-            const isNewHigh = this.score > prevHigh;
-            if (isNewHigh) {
-                app.player.ccHighScore = this.score;
-                app.saveProfile();
-                // Toast nudge pointing them at the share button
-                setTimeout(() => {
-                    if(typeof fx !== 'undefined')
-                        fx.toast('🏆 New Personal Best! Hit "Share" to brag! 📤', 'success');
-                }, 800);
-            }
-
             // If hint was used on ANY word this run, perfectRun becomes false
             if (this.hintUsed) this.perfectRun = false;
 
@@ -275,11 +237,12 @@ const compoundChainGame = {
                 achievements.unlock('perfect_chain');
             }
 
-            document.getElementById('cc-hint').textContent = isNewHigh ? '🏆 New Record!' : 'Circuit complete!';
-            document.getElementById('cc-status').textContent = `+${levelScore}${isNewHigh ? '  🏆 NEW HIGH SCORE!' : ' Circuit Completion!'}`;
-            document.getElementById('cc-status').style.color = isNewHigh ? '#ffd700' : 'var(--accent-green-light)';
+            document.getElementById('cc-hint').textContent = '✅ Circuit Linked!';
+            document.getElementById('cc-status').textContent = `+${levelScore} Pts`;
+            document.getElementById('cc-status').style.color = 'var(--accent-green-light)';
+            
             if(typeof fx !== 'undefined') {
-                fx.createExplosion(window.innerWidth / 2, window.innerHeight / 2, isNewHigh ? '#ffd700' : '#60efff', isNewHigh ? 70 : 40);
+                fx.createExplosion(window.innerWidth / 2, window.innerHeight / 2, '#00ff87', 50);
                 fx.screenPulse();
             }
             if(typeof sfx !== 'undefined') sfx.playVictory();
@@ -388,17 +351,32 @@ const compoundChainGame = {
             document.getElementById('cc-status').textContent = '';
             if(typeof sfx !== 'undefined') sfx.playSuccess();
 
-            const bonus = Math.floor((this.timeLeft / this.maxTime) * 20) + 10;
-            this.score += bonus;
+            const baseBonus = Math.floor((this.timeLeft / this.maxTime) * 20) + 10;
+            const finalBonus = Math.floor(baseBonus * this.chainMultiplier);
+            this.score += finalBonus;
+            
             document.getElementById('cc-score').textContent = this.score;
             if(typeof fx !== 'undefined') {
-                fx.floatingText(`+${bonus}`, cx, cy - 20, '#00ff87', '2rem');
+                const multiplierText = this.chainMultiplier > 1.0 ? ` (x${this.chainMultiplier.toFixed(1)})` : '';
+                fx.floatingText(`+${finalBonus}${multiplierText}`, cx, cy - 20, '#00ff87', '2rem');
                 fx.createExplosion(cx, cy, '#00ff87', 20);
             }
+
+            // Successfully compounded the link! Increase the multiplier for the next guess
+            this.chainMultiplier += 0.5;
 
             this.timeLeft = this.maxTime;
             this.renderViewer();
         } else {
+            // ── PENALTY FOR INCORRECT GUESS ──
+            this.chainMultiplier = 1.0; // Broken chain resets multiplier cleanly!
+            
+            if (this.score > 0) {
+                this.score = Math.max(0, this.score - 10);
+                document.getElementById('cc-score').textContent = this.score;
+                if(typeof fx !== 'undefined') fx.floatingText('-10', cx, cy - 30, 'var(--accent-red-light)', '1.5rem');
+            }
+
             // ── MANDATORY LEXICAL VALIDATION ──
             const currentWord = this.levelData.chain[this.currentWordIndex].toLowerCase();
             
@@ -411,19 +389,6 @@ const compoundChainGame = {
             else if (typeof EXTRA_WORDS !== 'undefined' && EXTRA_WORDS.includes(guess)) isStandalone = true;
             
             const originalStatus = document.getElementById('cc-status').textContent;
-            
-            if (!isStandalone) {
-                inputEl.disabled = true;
-                document.getElementById('cc-status').textContent = 'Validating word...';
-                try {
-                    const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${guess}`, { signal: AbortSignal.timeout(3000) });
-                    if (res.ok) isStandalone = true;
-                } catch (err) {
-                    // API failure fallback
-                }
-                inputEl.disabled = false;
-                inputEl.focus();
-            }
 
             if (!isStandalone) {
                 this.isPlaying = true; // Resume timer
@@ -443,17 +408,8 @@ const compoundChainGame = {
             // 2. COMPOUND INTEGRITY & 3. SEMANTIC DRIFT PREVENTION
             const compoundWord = currentWord + guess;
             let isCompound = false;
-            
-            inputEl.disabled = true;
-            document.getElementById('cc-status').textContent = 'Checking compound...';
-            try {
-                const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${compoundWord}`, { signal: AbortSignal.timeout(3000) });
-                if (res.ok) isCompound = true;
-            } catch (err) {
-                // API failure fallback
-            }
-            inputEl.disabled = false;
-            inputEl.focus();
+            if (typeof DICTIONARY !== 'undefined' && DICTIONARY.includes(compoundWord)) isCompound = true;
+            else if (typeof EXTRA_WORDS !== 'undefined' && EXTRA_WORDS.includes(compoundWord)) isCompound = true;
 
             if (isCompound) {
                 this.isPlaying = true; // Resume timer
@@ -493,21 +449,76 @@ const compoundChainGame = {
         }
     },
 
-    // ── Daily End Screen ───────────────────────────────────────────────
+    // ── Unified End Screen ───────────────────────────────────────────────
 
-    _showDailyEnd: function() {
-        const streak = typeof daily !== 'undefined' ? daily.getStreak() : 0;
-        const isNewHigh = this.score > (app.player.ccHighScore - 50); // approximate
+    _showEndScreen: function() {
+        let isNewHigh = false;
+        if (!this.isDailyMode) {
+            if (this.score > (app.player.ccHighScore || 0)) {
+                app.player.ccHighScore = this.score;
+                app.saveProfile();
+                isNewHigh = true;
+            }
+        } else {
+            if (this.score > (app.player.ccHighScore || 0)) isNewHigh = true;
+        }
 
         // Populate end screen fields
         const scoreEl = document.getElementById('daily-end-score');
         if (scoreEl) scoreEl.textContent = this.score;
 
         const streakEl = document.getElementById('daily-end-streak');
-        if (streakEl) streakEl.textContent = `🔥 ${streak} day streak`;
-
         const titleEl  = document.getElementById('daily-end-title');
-        if (titleEl) titleEl.textContent = isNewHigh ? '🏆 New Record!' : '✅ Chain Complete!';
+        const shareBtn = document.getElementById('cc-share-btn');
+        const nextRunBtn = document.getElementById('cc-next-run-btn');
+
+        if (this.isDailyMode) {
+            const streak = typeof daily !== 'undefined' ? daily.getStreak() : 0;
+            if (streakEl) {
+                streakEl.classList.remove('hidden');
+                streakEl.textContent = `🔥 ${streak} day streak`;
+            }
+            if (titleEl) titleEl.textContent = isNewHigh ? '🏆 New Daily Record!' : '✅ Daily Complete!';
+            if (shareBtn) {
+                shareBtn.classList.remove('hidden');
+                shareBtn.onclick = () => this.shareDailyResult();
+            }
+            if (nextRunBtn) {
+                nextRunBtn.innerHTML = "⚔️ Shiritori Royale";
+                nextRunBtn.onclick = () => app.launchGame('sr');
+            }
+        } else {
+            if (streakEl) streakEl.classList.add('hidden');
+            
+            if (this.perfectRun) {
+                if (titleEl) {
+                    titleEl.textContent = '⚡ Perfect Run!';
+                    titleEl.style.color = '#b34bff';
+                }
+            } else {
+                if (titleEl) {
+                    titleEl.textContent = isNewHigh ? '🏆 New Record!' : '✅ Run Complete!';
+                    titleEl.style.color = isNewHigh ? '#ffd700' : 'var(--accent-green-light)';
+                }
+            }
+            
+            if (shareBtn) {
+                if (isNewHigh) {
+                    shareBtn.classList.remove('hidden');
+                    shareBtn.onclick = () => this.shareResult();
+                } else {
+                    shareBtn.classList.add('hidden');
+                }
+            }
+
+            if (nextRunBtn) {
+                nextRunBtn.innerHTML = "↻ New Run";
+                nextRunBtn.onclick = () => {
+                    this._hideEndScreen();
+                    this.init();
+                };
+            }
+        }
 
         // Show end panel, hide form
         const formEl = document.getElementById('cc-form');
@@ -527,13 +538,17 @@ const compoundChainGame = {
         if (typeof fx !== 'undefined') {
             fx.createExplosion(window.innerWidth / 2, window.innerHeight / 3, '#ffd700', 80);
             fx.screenPulse();
-            setTimeout(() => fx.createExplosion(window.innerWidth / 3, window.innerHeight / 2, '#60efff', 50), 400);
-            setTimeout(() => fx.createExplosion(window.innerWidth * 2/3, window.innerHeight / 2, '#b34bff', 50), 700);
+            if(this.perfectRun && !this.isDailyMode) {
+                setTimeout(() => fx.createExplosion(window.innerWidth / 3, window.innerHeight / 2, '#b34bff', 60), 400);    
+            } else {
+                setTimeout(() => fx.createExplosion(window.innerWidth / 3, window.innerHeight / 2, '#60efff', 50), 400);
+            }
+            setTimeout(() => fx.createExplosion(window.innerWidth * 2/3, window.innerHeight / 2, '#f2c94c', 50), 700);
         }
         if (typeof sfx !== 'undefined') sfx.playVictory();
     },
 
-    _hideDailyEnd: function() {
+    _hideEndScreen: function() {
         const endEl = document.getElementById('daily-end');
         if (endEl) {
             endEl.classList.remove('daily-end-visible');
